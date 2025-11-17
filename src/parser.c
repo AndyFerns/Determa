@@ -56,6 +56,46 @@ static void error_at_current(Parser* parser, const char* message) {
     }
     printf(": %s\n", message);
 }
+
+/**
+ * @brief Consumes the next token from the lexer
+ */
+static void advance(Parser* parser) {
+    parser->previous = parser->current;
+    
+    // Keep scanning until we get a non-error token
+    for (;;) {
+        parser->current = get_next_token(&parser->lexer);
+        if (parser->current.type != TOKEN_ERROR) break;
+        
+        // Report the lexer error
+        error_at_current(parser, parser->current.lexeme);
+    }
+}
+
+/**
+ * @brief Consumes the current token if it matches the expected type
+ *
+ * If it matches, advance to the next token
+ * If not, report an error
+ */
+static void consume(Parser* parser, TokenType type, const char* message) {
+    if (parser->current.type == type) {
+        advance(parser);
+        return;
+    }
+    error_at_current(parser, message);
+}
+
+/**
+ * @brief Checks if the current token is of a given type
+ */
+static int check(Parser* parser, TokenType type) {
+    return parser->current.type == type;
+}
+
+
+
 /**
  * @brief The main function to parse source code
  *
