@@ -21,7 +21,7 @@ void run_test(TestFunc func, const char* name) {
     func(); 
     
     if (test_fail == start_fail) {
-        printf("\t[PASS] All assertions passed.\n");
+        printf("  [PASS] All assertions passed.\n");
     }
     printf("\n");
 }
@@ -31,10 +31,10 @@ void run_test(TestFunc func, const char* name) {
  */
 int print_test_summary() {
     printf("===========================\n");
-    printf("\t\t\tTest Summary:\n");
-    printf("\tTotal Assertions: %d\n", test_count);
-    printf("\tPassed:           %d\n", test_pass);
-    printf("\tFailed:           %d\n", test_fail);
+    printf("Test Summary:\n");
+    printf("  Total Assertions: %d\n", test_count);
+    printf("  Passed:           %d\n", test_pass);
+    printf("  Failed:           %d\n", test_fail);
     printf("===========================\n");
     
     // Return the fail count, useful for CI/automation
