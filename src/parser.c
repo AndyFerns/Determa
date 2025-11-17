@@ -95,20 +95,68 @@ static int check(Parser* parser, TokenType type) {
 }
 
 
+// --- Parsing Functions (The Grammar) ---
+
+/**
+ * @brief Parses a "primary" expression (the lowest level)
+ *
+ * Grammar Rule:
+ * primary -> NUMBER | "(" expression ")"
+ */
+static AstNode* parse_primary(Parser* parser) {
+    if (check(parser, TOKEN_INT)) {
+        // It's a number literal
+        long val = strtol(parser->current.lexeme, NULL, 10);
+        advance(parser); // Consume the number
+        return new_int_literal_node((int)val);
+    }
+
+    if (check(parser, TOKEN_LPAREN)) {
+        advance(parser); // Consume '('
+        AstNode* expr = parse_expression(parser); // Parse inner expression
+        consume(parser, TOKEN_RPAREN, "Expected ')' after expression");
+        return expr;
+    }
+
+    // If we get here, it's an error
+    error_at_current(parser, "Expected expression");
+    return NULL;
+}
+
+/**
+ * @brief Parses an expression (Handles precedence)
+ *
+ * (STUB) For now, we only parse primary expressions
+ * We will add operator precedence (Term, Factor) later
+ */
+static AstNode* parse_expression(Parser* parser) {
+    // This is a placeholder
+    // We will build a full Pratt parser here soon
+    return parse_primary(parser);
+}
 
 /**
  * @brief The main function to parse source code
- *
- * (STUB) This is a placeholder
  */
 AstNode* parse(const char* source) {
-    // (void)source; // Suppress unused warning for now
+    Parser parser;
+    parser.lexer = init_lexer(source);
+    parser.had_error = 0;
     
-    // Test the lexer
-    Lexer lexer = init_lexer(source);
-    printf("Parser: Lexer initialized. First token:\n");
-    print_token(get_next_token(&lexer));
+    // Prime the parser by loading the first token
+    advance(&parser);
     
-    // For now, we don't return a real AST
-    return NULL;
+    // For now, we only parse a single expression
+    AstNode* ast = parse_expression(&parser);
+    
+    // A simple program must end with a semicolon
+    consume(&parser, TOKEN_SEMICOLON, "Expected ';' after expression");
+    
+    // If we had an error, free the (partial) tree and return NULL
+    if (parser.had_error) {
+        free_ast(ast);
+        return NULL;
+    }
+
+    return ast;
 }
