@@ -40,36 +40,49 @@ Syllabus Link: Modules 3 & 4 (CFGs, PDAs)
 // Example Determa Grammar
 
 ```bash
-Program        -> StatementList
-StatementList  -> Statement (Statement)*
-Statement      -> VarDecl | Assignment | PrintStmt
-VarDecl        -> "var" ID "=" Expression ";"
-Assignment     -> ID "=" Expression ";"
-PrintStmt      -> "print" Expression ";"
-Expression     -> Term ( ("+"|"-") Term )*
-Term           -> Factor ( ("*"|"/") Factor )*
-Factor         -> Primary | Unary
-Unary          -> "-" Primary
-Primary        -> INT | ID | "(" Expression ")"
+Grammar Rule: program -> statement* EOF (Implicitly handled for now)
+
+Grammar Rule: statement -> expr_stmt (Implicitly handled for now)
+
+Grammar Rule: print_stmt -> "print" expression ";" (TODO)
+
+Grammar Rule: var_decl -> "var" IDENTIFIER ("=" expression)? ";" (TODO)
+
+Grammar Rule: expr_stmt -> expression ";" (Implemented)
+
+Grammar Rule: expression -> term (Implemented)
+
+Grammar Rule: term -> factor ( ( "-" | "+" ) factor )* (Implemented)
+
+Grammar Rule: factor -> primary ( ( "/" | "*" ) primary )* (Implemented)
+
+Grammar Rule: primary -> INT | IDENTIFIER | "(" expression ")" (INT and parens implemented)
+
 ```
 
-- [ ] AST Node Structs: In include/ast.h, define structs for each node in the AST (e.g., struct BinaryOpNode, struct VarDeclNode, struct NumberNode). These structs are the in-memory representation of your Parse Tree.
+- [x] AST Node Structs: In include/ast.h, define structs for each node in the AST (e.g., struct BinaryOpNode, struct VarDeclNode, struct NumberNode). These structs are the in-memory representation of your Parse Tree.
 
-- [ ] Implement Recursive Descent Parser: This is the core of the parser.
+- [x] Implement Recursive Descent Parser: This is the core of the parser.
 
-- [ ] Create parser.c.
+- [x] Create parser.c.
 
-- [ ] Write a function for each grammar rule (e.g., parse_statement(), parse_expression()).
+- [x] Write a function for each grammar rule (e.g., parse_statement(), parse_expression()).
 
-- [ ] These functions will consume tokens from the Lexer and recursively build the AST.
+- [x] These functions will consume tokens from the Lexer and recursively build the AST.
 
-- [ ] [EXAM FEATURE] Implement "PDA Debug Mode":
+### [EXAM FEATURE] Implement "PDA Debug Mode"
 
 - [ ] Add a --pda-debug flag.
 
 - [ ] In your parser functions, print PUSH(RuleName) on entry and POP(RuleName) on exit.
 
 - [ ] Result: This visually demonstrates your parser acting as a Pushdown Automaton (PDA), using the C call stack as its stack. (Fulfills LO 4.4)
+  
+### Unit Tests
+
+- [x] Create tests/parser/test_parser.c (and tests/include/test_parser.h).
+
+- [x] Write tests that feed tokens to the parser and check that the resulting AST structure is correct. (Expression tests are done!)
 
 ## Phase 3: The Interpreter (Execution)
 
