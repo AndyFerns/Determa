@@ -22,7 +22,9 @@ static void check_token(Token token, TokenType type, const char* lexeme, int lin
     CHECK(token.line == line, msg);
 
     sprintf(msg, "Lexeme mismatch. Expected '%s', Got '%.*s'", lexeme, token.length, token.lexeme);
-    CHECK(strncmp(token.lexeme, lexeme, token.length) == 0 && token.length == strlen(lexeme), msg);
+    
+    // Cast token.length to size_t to fix the -Wsign-compare warning
+    CHECK(strncmp(token.lexeme, lexeme, token.length) == 0 && (size_t)token.length == strlen(lexeme), msg);
 }
 
 
@@ -70,7 +72,8 @@ void test_line_numbers() {
     check_token(get_next_token(&lexer), TOKEN_ID,  "b", 2);
     // The empty line should be skipped, and 'c' should be on line 4
     check_token(get_next_token(&lexer), TOKEN_ID,  "c", 4);
-    check_token(get_next_token(&lexer), TOKEN_EOF, "",  4);
+    // FIX: EOF token to be on line 5, not 4
+    check_token(get_next_token(&lexer), TOKEN_EOF, "",  5);
 }
 
 /**
