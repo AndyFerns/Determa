@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "test.h"
 #include "test_lexer.h"
+#include "test_parser.h"
 
 int main(int argc, char* argv[]) {
     // Suppress unused warnings
@@ -24,6 +25,10 @@ int main(int argc, char* argv[]) {
     run_test(test_line_numbers, "Lexer - Line Number Increments");
     run_test(test_whitespace_and_comments, "Lexer - Whitespace and Comment Skipping");
 
+    // --- NEW TEST ---
+    printf("\n"); // Add a separator
+    run_test(test_parser_hello, "Parser - Stub Test");
+    
     // --- Add more tests here as you build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");
 
