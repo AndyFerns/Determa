@@ -7,16 +7,33 @@
 #include "test.h"     // For the CHECK macro
 #include "parser.h"   // The module we are testing
 #include "ast.h"
+#include <stdlib.h>   // For NULL
 
 /**
- * @brief A simple "hello world" test for the parser
- *
- * (STUB) This just checks that the parser function exists for now
+ * @brief Tests parsing a simple integer literal
  */
-void test_parser_hello() {
-    AstNode* ast = parse("1 + 2;");
-    CHECK(ast == NULL, "Parser stub returns NULL");
+void test_parser_integer_literal() {
+    const char* source = "123;"; // A simple program
     
-    // Once implemented, we will free the AST
-    // free_ast(ast);
+    AstNode* ast = parse(source);
+    
+    // 1. Check that parsing succeeded
+    CHECK(ast != NULL, "Parser returned a non-NULL AST");
+    if (ast == NULL) return; // Guard for NULL dereference
+
+    // 2. Check the node type
+    CHECK(ast->type == NODE_INT_LITERAL, "AST node is an INT_LITERAL");
+
+    // 3. Check the value
+    if (ast->type == NODE_INT_LITERAL) {
+        AstNodeIntLiteral* int_node = (AstNodeIntLiteral*)ast;
+        CHECK(int_node->value == 123, "Integer value is 123");
+    }
+
+    // 4. Print the AST for manual inspection
+    printf("--- AST for '123;' ---\n");
+    print_ast(ast);
+    
+    // 5. Clean up
+    free_ast(ast);
 }

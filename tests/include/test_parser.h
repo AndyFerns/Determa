@@ -7,8 +7,8 @@
 #define TEST_PARSER_H
 
 /**
- * @brief A simple "hello world" test for the parser
+ * @brief Tests parsing a simple integer literal
  */
-void test_parser_hello();
+void test_parser_integer_literal();
 
 #endif // TEST_PARSER_H
