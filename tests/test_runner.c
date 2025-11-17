@@ -27,8 +27,8 @@ int main(int argc, char* argv[]) {
 
     // --- NEW TEST ---
     printf("\n"); // Add a separator
-    run_test(test_parser_hello, "Parser - Stub Test");
-    
+    run_test(test_parser_integer_literal, "Parser - Parsing a simple integer literal");
+
     // --- Add more tests here as you build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");
 
