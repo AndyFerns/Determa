@@ -10,8 +10,7 @@ SET INCLUDES=-Iinclude
 REM Define the target executable name
 SET TARGET=bin\determa.exe
 
-REM --- Updated sources for the COMPILER (Phase 1) ---
-REM As we add new files (parser.c, ast.c), we will add them here.
+REM --- Updated sources for the COMPILER ---
 SET SOURCES=main.c src\lexer.c src\token.c
 
 REM --- Compilation Step ---
