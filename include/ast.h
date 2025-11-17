@@ -79,7 +79,25 @@ typedef struct {
 
 // We will add more node types here (Assign, Access, etc)
 
+
 // --- Helper Functions ---
+
+/**
+ * @brief Creates a new Integer Literal AST node
+ * @param value The integer value
+ * @return A pointer to the new AstNode
+ */
+AstNode* new_int_literal_node(int value);
+
+/**
+ * @brief Creates a new Binary Operator AST node
+ * @param op The operator token
+ * @param left The left-hand side expression
+ * @param right The right-hand side expression
+ * @return A pointer to the new AstNode
+ */
+AstNode* new_binary_op_node(Token op, AstNode* left, AstNode* right);
+
 
 /**
  * @brief Frees an entire AST tree recursively
