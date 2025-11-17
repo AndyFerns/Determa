@@ -18,8 +18,10 @@
  * This function initializes a parser and begins the parsing process
  *
  * @param source The source code string to parse
+ * @param pda_debug_mode 0 to run silently, 1 to enable PDA trace logging
+ * 
  * @return AstNode* The root of the generated AST (or NULL on error)
  */
-AstNode* parse(const char* source);
+AstNode* parse(const char* source, int pda_debug_mode);
 
 #endif // PARSER_H
