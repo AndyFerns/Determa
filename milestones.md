@@ -1,5 +1,7 @@
 # 🗺️ Determa Language & Compiler Roadmap
 
+Project Goal: A C-like, statically-typed language with a Garbage Collector (GC) to provide type-safety and automatic memory management.
+
 This document outlines the milestones to build the Determa programming language, a simple C-like language. This project builds on a completed Regex/DFA engine to create a full compiler-interpreter.
 
 The project is structured in phases. Phases 2 and 4 are specifically designed to align with advanced TCS topics for practical exam study.
@@ -13,17 +15,19 @@ Status: 90% Complete (The core engine is done).
 
 - [x] Core Engine: Build a Regex Engine (NFA/DFA).
 
-- [ ] Define Tokens: Create an enum in include/tokens.h for all of Determa's tokens (e.g., TOKEN_VAR, TOKEN_ID, TOKEN_INT, TOKEN_PLUS, TOKEN_LPAREN, TOKEN_SEMICOLON, TOKEN_EOF).
+- [x] Define Tokens: Create an enum in include/tokens.h for all of Determa's tokens (e.g., TOKEN_VAR, TOKEN_ID, TOKEN_INT, TOKEN_PLUS, TOKEN_LPAREN, TOKEN_SEMICOLON, TOKEN_EOF).
 
-- [ ] Token Struct: Create a Token struct to hold the token's type, its string value (lexeme), and its line number.
+- [x] Token Struct: Create a Token struct to hold the token's type, its string value (lexeme), and its line number.
 
-- [ ] Implement the Lexer: Write the main lexer.c module.
+- [x] Implement the Lexer: Write the main lexer.c module.
 
-- [ ] Create a Lexer struct that holds the source code and current position.
+- [x] Create a Lexer struct that holds the source code and current position.
 
-- [ ] Write a get_next_token() function. This function will use your DFA engine to match the longest possible token from the current position.
+- [x] Write a get_next_token() function. This function will use your DFA engine to match the longest possible token from the current position.
 
-- [ ] Crucial: The Lexer must handle whitespace and comments by skipping them.
+- [x] Crucial: The Lexer must handle whitespace and comments by skipping them.
+
+> PHASE 1 COMPLETE! (18/11/25, 03:54)
 
 ## Phase 2: The Parser (Syntactic Analysis)
 
