@@ -68,4 +68,27 @@ typedef struct {
     int line;
 } Token;
 
+/**
+ * @brief Creates a new token.
+ * @param type The type of the token.
+ * @param lexeme A pointer to the start of the lexeme in the source.
+ * @param length The length of the lexeme.
+ * @param line The line number of the token.
+ * @return A new Token struct.
+ */
+Token create_token(TokenType type, const char* lexeme, int length, int line);
+
+/**
+ * @brief Prints a token to stdout in a human-readable format.
+ * @param token The token to print.
+ */
+void print_token(Token token);
+
+/**
+ * @brief Converts a TokenType enum to a string.
+ * @param type The TokenType to convert.
+ * @return A constant string representation (e.g., "TOKEN_PLUS").
+ */
+const char* token_type_to_string(TokenType type);
+
 #endif
