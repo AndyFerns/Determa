@@ -9,16 +9,39 @@
  * 
  */
 
-// Simply prints a welcome message for now
 #include <stdio.h>
+#include <string.h> // For strcmp
+#include "parser.h" // --- NEW: Include our parser ---
+#include "ast.h"    // --- NEW: Include our AST ---
 
 int main(int argc, char* argv[]) {
-    // Suppress unused warnings for now
-    (void)argc;
-    (void)argv;
+    // --- NEW: Simple argument parsing ---
+    int pda_debug_mode = 0;
+    const char* source_string = "1 + 2 * 3;"; // Default test string
 
+    if (argc > 1) {
+        if (strcmp(argv[1], "--pda-debug") == 0) {
+            pda_debug_mode = 1;
+            printf("--- PDA DEBUG MODE ENABLED ---\n");
+        }
+        // In the future, we'll read a file path here
+    }
+    
     printf("Determa Compiler [v0.1 'Balsa' Dev Build]\n");
-    printf("Ready to compile\n");
+    printf("Parsing source: \"%s\"\n\n", source_string);
+
+    // --- NEW: Run the parser ---
+    AstNode* ast = parse(source_string, pda_debug_mode);
+
+    if (ast != NULL) {
+        printf("\n--- Parse Succeeded: AST --- \n");
+        print_ast(ast);
+        free_ast(ast);
+    } else {
+        printf("\n--- Parse Failed --- \n");
+    }
+
+    return 0;
 
     // TODO: In the future, this will:
     // 1. Load a file
@@ -27,6 +50,4 @@ int main(int argc, char* argv[]) {
     // 4. Run the type checker
     // 5. Compile to bytecode
     // 6. Run the VM
-
-    return 0;
 }
