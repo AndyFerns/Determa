@@ -72,11 +72,11 @@ Grammar Rule: primary -> INT | IDENTIFIER | "(" expression ")" (INT and parens i
 
 ### [EXAM FEATURE] Implement "PDA Debug Mode"
 
-- [ ] Add a --pda-debug flag.
+- [x] Add a --pda-debug flag.
 
-- [ ] In your parser functions, print PUSH(RuleName) on entry and POP(RuleName) on exit.
+- [x] In your parser functions, print PUSH(RuleName) on entry and POP(RuleName) on exit.
 
-- [ ] Result: This visually demonstrates your parser acting as a Pushdown Automaton (PDA), using the C call stack as its stack. (Fulfills LO 4.4)
+- [x] Result: This visually demonstrates your parser acting as a Pushdown Automaton (PDA), using the C call stack as its stack. (Fulfills LO 4.4)
   
 ### Unit Tests
 
