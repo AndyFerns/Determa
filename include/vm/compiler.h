@@ -1,3 +1,14 @@
+/**
+ * @file compiler.h
+ * @author Andrew Fernandes
+ * @brief Compiler headerfile defining structs and helpers used to walk the ast and compile it into a bytecode chunk
+ * @version 0.1
+ * @date 2025-11-18
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #ifndef VM_COMPILER_H
 #define VM_COMPILER_H
 
