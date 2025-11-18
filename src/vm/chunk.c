@@ -10,6 +10,7 @@
 // --- Memory Management Helper ---
 // We handle reallocations manually here to avoid dependency on a complex memory manager yet.
 static void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
+    (void)oldSize; // Silence warning for unused parameter
     if (newSize == 0) {
         free(pointer);
         return NULL;
