@@ -18,6 +18,17 @@
 #include "ast.h"
 
 /**
+ * @brief Initializes/Resets the persistent state of the type checker.
+ * Must be called before processing a new program or starting a REPL session.
+ */
+void init_typechecker();
+
+/**
+ * @brief Frees type checker resources.
+ */
+void free_typechecker();
+
+/**
  * @brief Runs the semantic analysis on the AST.
  * @param root The root of the AST.
  * @return 1 if the program is semantically valid, 0 if there are errors.
