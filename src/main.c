@@ -10,18 +10,22 @@
  */
 
 #include <stdio.h>
-#include <string.h> // For strcmp
+#include <string.h> 
 
 #include "parser.h" 
-#include "ast.h"
+#include "ast.h"   
 #include "typechecker.h"
+#include "vm/common.h"
+#include "vm/chunk.h"
+#include "vm/vm.h"
+#include "vm/compiler.h"
 
 int main(int argc, char* argv[]) {
     int pda_debug_mode = 0;
     const char* source_string = 
         "var x = 10;\n"
         "var y = 20;\n"
-        "print x + y * 2;";; // Default test string
+        "print x + y * 2;"; //Default test string
 
     if (argc > 1) {
         if (strcmp(argv[1], "--pda-debug") == 0) {
@@ -34,20 +38,36 @@ int main(int argc, char* argv[]) {
     printf("Determa Compiler [v0.1 'Balsa' Dev Build]\n");
     printf("Parsing source: \"%s\"\n\n", source_string);
 
-    // --- NEW: Run the parser ---
+    // 1. Initialize VM
+    init_vm();
+
+    // 2. Parse
     AstNode* ast = parse(source_string, pda_debug_mode);
 
     if (ast != NULL) {
         printf("\n--- Parse Succeeded: AST --- \n");
         print_ast(ast);
 
-        // 2. Type Check (NEW)
-        printf("\n--- Running Type Checker --- \n");
+        // 3. Type Check
         if (typecheck_ast(ast)) {
-             printf("Type Check Passed.\n");
-             // Phase 4: Generate Code / Run VM would go here
+            printf("Type Check Passed.\n");
+            
+            // 4. Compile to Bytecode
+            Chunk chunk;
+            init_chunk(&chunk);
+            
+            if (compile_ast(ast, &chunk)) {
+                // 5. Run VM
+                printf("\n--- Execution Output ---\n");
+                interpret(&chunk);
+            } else {
+                printf("Compilation failed.\n");
+            }
+            
+            free_chunk(&chunk);
+
         } else {
-             printf("Type Check Failed.\n");
+            printf("Type Check Failed.\n");
         }
 
         free_ast(ast);
@@ -55,6 +75,7 @@ int main(int argc, char* argv[]) {
         printf("\n--- Parse Failed --- \n");
     }
 
+    free_vm();
     return 0;
 
     // TODO: In the future, this will:
