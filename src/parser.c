@@ -141,7 +141,7 @@ static AstNode* parse_primary(Parser* parser) {
         long val = strtol(buf, NULL, 10);
         advance(parser);
         TRACE_EXIT("Primary (IntLiteral)");
-        return new_int_literal_node((int)val);
+        return new_int_literal_node((int)val, parser->previous.line);
     }
 
     // Handle identifier
@@ -149,7 +149,7 @@ static AstNode* parse_primary(Parser* parser) {
         Token name = parser->current;
         advance(parser);
         TRACE_EXIT("Primary (VarAccess)");
-        return new_var_access_node(name);
+        return new_var_access_node(name, parser->previous.line);
     }
 
     // Consume '('
@@ -181,7 +181,7 @@ static AstNode* parse_factor(Parser* parser) {
     while (match(parser, op_types, 2)) {
         Token op = parser->previous;
         AstNode* right = parse_primary(parser);
-        node = new_binary_op_node(op, node, right);
+        node = new_binary_op_node(op, node, right, op.line);
     }
     
     TRACE_EXIT("Factor");
@@ -202,7 +202,7 @@ static AstNode* parse_term(Parser* parser) {
     while (match(parser, op_types, 2)) {
         Token op = parser->previous;
         AstNode* right = parse_factor(parser);
-        node = new_binary_op_node(op, node, right);
+        node = new_binary_op_node(op, node, right, op.line);
     }
     
     TRACE_EXIT("Term");
@@ -246,10 +246,14 @@ static AstNode* parse_expression(Parser* parser) {
  */
 static AstNode* parse_print_statement(Parser* parser) {
     TRACE_ENTER("PrintStmt");
+
+    // Capture the line of the 'print' token (which was just consumed/matched in parse_statement)
+    int line = parser->previous.line; 
+
     AstNode* value = parse_expression(parser);
     consume(parser, TOKEN_SEMICOLON, "Expected ';' after value");
     TRACE_EXIT("PrintStmt");
-    return new_print_stmt_node(value);
+    return new_print_stmt_node(value, line);
 }
 
 /**
@@ -265,6 +269,9 @@ static AstNode* parse_print_statement(Parser* parser) {
  */
 static AstNode* parse_var_declaration(Parser* parser) {
     TRACE_ENTER("VarDecl");
+
+    int line = parser->previous.line;
+
     consume(parser, TOKEN_ID, "Expected variable name");
     Token name = parser->previous;
     
@@ -275,7 +282,7 @@ static AstNode* parse_var_declaration(Parser* parser) {
     
     consume(parser, TOKEN_SEMICOLON, "Expected ';' after variable declaration");
     TRACE_EXIT("VarDecl");
-    return new_var_decl_node(name, initializer);
+    return new_var_decl_node(name, initializer, line);
 }
 
 /**
@@ -303,7 +310,9 @@ static AstNode* parse_statement(Parser* parser) {
     AstNode* expr = parse_expression(parser);
     consume(parser, TOKEN_SEMICOLON, "Expected ';' after expression");
     TRACE_EXIT("Statement (Expr)");
-    return new_expr_stmt_node(expr); 
+    
+    // Use expression's line for the statement line
+    return new_expr_stmt_node(expr, expr ? expr->line : parser->previous.line);
 }
 
 /**
