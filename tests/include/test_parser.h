@@ -26,4 +26,19 @@ void test_parser_operator_precedence();
  */
 void test_pda_debug_output();
 
+/**
+ * @brief Test parser variable declaration
+ */
+void test_parser_var_declaration(); 
+
+/**
+ * @brief Test parser print statement
+ */
+void test_parser_print_statement(); 
+
+/**
+ * @brief Test parser program formation + parsing
+ */
+void test_parser_program();         
+
 #endif // TEST_PARSER_H
