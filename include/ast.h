@@ -55,8 +55,9 @@ typedef struct AstNode {
  */
 typedef struct {
     AstNode node;
-    AstNode** statements; // Dynamic array of statement nodes
-    int statement_count;
+    AstNode** statements;   // Dynamic array of statement nodes
+    int statement_count;    // Number of statements in the program
+    int capacity;           // Required for dynamic array growth
 } AstNodeProgram;
 
 /**
@@ -90,6 +91,18 @@ typedef struct {
 } AstNodeVarDecl;
 
 /**
+ * @struct AstNodeVarAssign
+ * @brief Represents assigning of an expression to a variable 
+ * 
+ * (Eg. x = 10;)
+ */
+typedef struct {
+    AstNode node;      // Base "class"
+    Token name;        // The identifier token for the variable
+    AstNode* expression;
+} AstNodeVarAssign;
+
+/**
  * @struct AstNodeVarAccess
  * @brief Represents reading a variable 'name'
  */
@@ -118,13 +131,62 @@ typedef struct {
 
 // We will add more node types here (Assign, Access, etc)
 
-
+// ========================
 // --- Helper Functions ---
+// ========================
 
+/**
+ * @brief Creates a new Variable Declaration AST node.
+ * @param name The identifier token representing the variable name.
+ * @param initializer The initializer expression node (can be NULL).
+ * @return A pointer to the newly allocated AstNode, or NULL on allocation failure.
+ */
 AstNode* new_program_node(AstNode** statements, int count);
+
+
+/**
+ * @brief Creates a new Variable Access AST node.
+ * 
+ * @param name identifier token representing the variable name
+ * @param initializer 
+ * @return AstNode* 
+ */
 AstNode* new_var_decl_node(Token name, AstNode* initializer);
+
+/**
+ * @brief Creates a new Variable Access AST node.
+ *
+ * Represents reading a variable's value (e.g., `x`).
+ *
+ * @param name The identifier token for the variable being accessed
+ * @return Pointer to the newly allocated AstNode, or NULL on allocation failure
+ */
 AstNode* new_var_access_node(Token name);
+
+/**
+ * @brief Creates a new Print Statement AST node.
+ *
+ * Represents: `print expression;`
+ *
+ * The print statement wraps a single expression which will be evaluated
+ * and sent to the output stream when executed.
+ *
+ * @param expression The expression node whose value should be printed.
+ * @return A pointer to the newly allocated AstNode, or NULL on allocation failure.
+ */
 AstNode* new_print_stmt_node(AstNode* expression);
+
+/**
+ * @brief Creates a new Expression Statement AST node.
+ *
+ * An expression-statement is any expression used as a standalone statement.
+ * Examples:
+ *   - `x = 10;`
+ *   - `1 + 2;`
+ *
+ * @param expression The expression to wrap as a statement (must not be NULL).
+ * @return A pointer to the newly allocated AstNodeExprStmt, or NULL on allocation failure.
+ */
 AstNode* new_expr_stmt_node(AstNode* expression);
 
 /**
