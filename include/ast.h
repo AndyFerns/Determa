@@ -143,6 +143,22 @@ typedef struct {
  */
 AstNode* new_program_node(AstNode** statements, int count);
 
+// /**
+//  * @brief Creates a new Variable Declaration AST node.
+//  * 
+//  * @return AstNode* A pointer to the newly allocated AstNode, or NULL on allocation failure.
+//  */
+// AstNode* new_program_node();
+
+/**
+ * @brief Adds a statement to the Program node
+ * 
+ * Helper Function for NODE_PROGRAM
+ * 
+ * @param program_node pointer to an AstNodeProgram (base AstNode ptr)
+ * @param statement Pointer to a list of statements required to be appended
+ */
+void program_add_statement(AstNode* program_node, AstNode* statement);
 
 /**
  * @brief Creates a new Variable Access AST node.
