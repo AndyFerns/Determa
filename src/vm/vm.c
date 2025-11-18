@@ -145,6 +145,26 @@ static InterpretResult run() {
                 break;
             }
 
+            // Global variable logic
+            case OP_GET_GLOBAL: {
+                uint8_t index = READ_BYTE();
+                // Direct array access: O(1) speed
+                Value val = vm.globals[index];
+                *stackTop++ = val;
+                break;
+            }
+
+            case OP_SET_GLOBAL: {
+                uint8_t index = READ_BYTE();
+                // In C: x = 10 evaluates to 10. 
+                // We peek the value so it stays on stack (for expressions like a = b = 10)
+                // But for simple VarDecl statements, the compiler will emit POP later.
+                // For our current simple compiler, let's POP it to be safe for statements.
+                Value val = *(--stackTop);
+                vm.globals[index] = val;
+                break;
+            }
+
             case OP_ADD:      BINARY_OP(+); break;
             case OP_SUBTRACT: BINARY_OP(-); break;
             case OP_MULTIPLY: BINARY_OP(*); break;
@@ -158,6 +178,7 @@ static InterpretResult run() {
 
             case OP_PRINT: {
                 Value v = *(--stackTop);   // pop()
+                printf("Out: ");    // prefix output for debugging
                 print_value(v);
                 printf("\n");
                 break;
