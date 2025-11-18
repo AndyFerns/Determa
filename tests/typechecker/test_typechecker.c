@@ -15,6 +15,9 @@
 #include "typechecker.h"
 #include "ast.h"
 
+/**
+ * @brief Test to see whether the code should pass given type checking
+ */
 void test_tc_var_decl_and_access() {
     // Valid code
     const char* source = "var x = 10; print x + 1;";
@@ -28,6 +31,10 @@ void test_tc_var_decl_and_access() {
     }
 }
 
+/**
+ * @brief Test to check whether a variable has been defined or not and refusal to use an undefined variable
+ * 
+ */
 void test_tc_undefined_var() {
     // Invalid code: 'y' is not defined
     const char* source = "var x = 10; print y;";
@@ -43,6 +50,9 @@ void test_tc_undefined_var() {
     }
 }
 
+/**
+ * @brief Tests that a variable shouldnt be able to be redeclared after initial declaration
+ */
 void test_tc_redeclaration() {
     // Invalid code: 'x' defined twice
     const char* source = "var x = 10; var x = 20;";
@@ -58,6 +68,9 @@ void test_tc_redeclaration() {
     }
 }
 
+/**
+ * @brief Placeholder test for future operator type mismatches.
+ */
 void test_tc_binary_op_mismatch() {
     // For now we only have INT, so it's hard to mismatch types unless we use VOID
     // But logic is ready
