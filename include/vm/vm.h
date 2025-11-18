@@ -11,16 +11,19 @@
 #include "chunk.h"
 
 #define STACK_MAX 256
+// Maximum number of global variables allowed in a script
+#define GLOBALS_MAX 256 
 
 /**
  * @struct VM
  * @brief The Virtual Machine state.
  */
 typedef struct {
-    Chunk* chunk;        // The chunk of bytecode being executed
-    uint8_t* ip;         // Instruction Pointer (points to next byte to read)
-    Value stack[STACK_MAX]; // The operand stack
-    Value* stackTop;     // Points to the top of the stack
+    Chunk* chunk;               // The chunk of bytecode being executed
+    uint8_t* ip;                // Instruction Pointer (points to next byte to read)
+    Value stack[STACK_MAX];     // The operand stack
+    Value* stackTop;            // Points to the top of the stack
+    Value globals[GLOBALS_MAX]; // Compiler resolves names ("x") to indices (0) and stores it here
 } VM;
 
 /**
