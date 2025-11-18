@@ -1,6 +1,8 @@
 /**
  * @file vm.h
  * @brief Defines the Virtual Machine state and execution interface.
+ * 
+ * The VM will run in an infinite loop of Fetch -> Decode -> Execute
  */
 
 #ifndef VM_VM_H
@@ -31,8 +33,16 @@ typedef enum {
     INTERPRET_RUNTIME_ERROR
 } InterpretResult;
 
+// Expose the global VM instance for testing purposes (inspecting the stack)
+extern VM vm;
+
 void init_vm();
 void free_vm();
+
+// --- Stack Operations ---
+void push(Value value);
+Value pop();
+Value peek(int distance); // Look at stack without popping
 
 /**
  * @brief Executes a chunk of bytecode.
