@@ -11,8 +11,10 @@
 
 #include <stdio.h>
 #include <string.h> // For strcmp
+
 #include "parser.h" 
-#include "ast.h"    
+#include "ast.h"
+#include "typechecker.h"
 
 int main(int argc, char* argv[]) {
     int pda_debug_mode = 0;
@@ -38,6 +40,16 @@ int main(int argc, char* argv[]) {
     if (ast != NULL) {
         printf("\n--- Parse Succeeded: AST --- \n");
         print_ast(ast);
+
+        // 2. Type Check (NEW)
+        printf("\n--- Running Type Checker --- \n");
+        if (typecheck_ast(ast)) {
+             printf("Type Check Passed.\n");
+             // Phase 4: Generate Code / Run VM would go here
+        } else {
+             printf("Type Check Failed.\n");
+        }
+
         free_ast(ast);
     } else {
         printf("\n--- Parse Failed --- \n");
