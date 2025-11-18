@@ -9,7 +9,9 @@
 #include "vm/vm.h"
 #include "vm/opcode.h"
 
-void test_vm_initialization() {
+// Note: Test functions are now static to avoid linker errors when building the test runner.
+
+static void test_vm_initialization() {
     // Test 1: Create and initialize a chunk
     Chunk chunk;
     init_chunk(&chunk);
@@ -37,8 +39,7 @@ void test_vm_initialization() {
 }
 
 
-
-void test_vm_arithmetic() {
+static void test_vm_arithmetic() {
     // Test: 1 + 2
     Chunk chunk;
     init_chunk(&chunk);
@@ -47,12 +48,12 @@ void test_vm_arithmetic() {
     // 1. Push Constant 1
     int c1 = add_constant(&chunk, 1);
     write_chunk(&chunk, OP_CONSTANT, 1);
-    write_chunk(&chunk, c1, 1);
+    write_chunk(&chunk, (uint8_t)c1, 1); // Cast constant index to uint8_t
 
     // 2. Push Constant 2
     int c2 = add_constant(&chunk, 2);
     write_chunk(&chunk, OP_CONSTANT, 1);
-    write_chunk(&chunk, c2, 1);
+    write_chunk(&chunk, (uint8_t)c2, 1); // Cast constant index to uint8_t
 
     // 3. Add
     write_chunk(&chunk, OP_ADD, 1);
@@ -73,7 +74,7 @@ void test_vm_arithmetic() {
 }
 
 
-void test_vm_precedence_manual() {
+static void test_vm_precedence_manual() {
     // Test: -5 + 10 (Order of ops check)
     Chunk chunk;
     init_chunk(&chunk);
@@ -82,7 +83,7 @@ void test_vm_precedence_manual() {
     // Push 5
     int c1 = add_constant(&chunk, 5);
     write_chunk(&chunk, OP_CONSTANT, 1);
-    write_chunk(&chunk, c1, 1);
+    write_chunk(&chunk, (uint8_t)c1, 1);
 
     // Negate (-5)
     write_chunk(&chunk, OP_NEGATE, 1);
@@ -90,7 +91,7 @@ void test_vm_precedence_manual() {
     // Push 10
     int c2 = add_constant(&chunk, 10);
     write_chunk(&chunk, OP_CONSTANT, 1);
-    write_chunk(&chunk, c2, 1);
+    write_chunk(&chunk, (uint8_t)c2, 1);
 
     // Add
     write_chunk(&chunk, OP_ADD, 1);
@@ -103,4 +104,11 @@ void test_vm_precedence_manual() {
 
     free_chunk(&chunk);
     free_vm();
+}
+
+// Global function to run tests (called by test_runner.c)
+void test_vm_suite() {
+    run_test(test_vm_initialization, "VM - Chunk & Constant Pool Basics");
+    run_test(test_vm_arithmetic, "VM - Arithmetic (1 + 2)");
+    run_test(test_vm_precedence_manual, "VM - Manual Precedence (-5 + 10)");
 }
