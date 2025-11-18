@@ -23,12 +23,14 @@
  * @brief An enumeration of all possible AST node types
  */
 typedef enum {
+    NODE_PROGRAM,      // Root Node, holds a list of statements 
     NODE_INT_LITERAL,  // A simple integer
     NODE_BINARY_OP,    // An operation like 1 + 2
     NODE_VAR_DECL,     // var x = 10;
     NODE_VAR_ASSIGN,   // x = 20;
-    NODE_VAR_ACCESS,   // print x;
+    NODE_VAR_ACCESS,   // x;
     NODE_PRINT_STMT,   // print 10;
+    NODE_EXPR_STMT     // 1 + 1; Expression as a statements
     // We will add more as we go (if, while, funcs)
 } AstNodeType;
 
@@ -46,6 +48,16 @@ typedef struct AstNode {
 
 // --- Specific Node Structs ---
 // These structs "inherit" from AstNode
+
+/**
+ * @struct AstNodeProgram
+ * @brief The root node representing the entire program
+ */
+typedef struct {
+    AstNode node;
+    AstNode** statements; // Dynamic array of statement nodes
+    int statement_count;
+} AstNodeProgram;
 
 /**
  * @struct AstNodeIntLiteral
@@ -77,10 +89,43 @@ typedef struct {
     AstNode* init;     // The initializer expression (can be NULL)
 } AstNodeVarDecl;
 
+/**
+ * @struct AstNodeVarAccess
+ * @brief Represents reading a variable 'name'
+ */
+typedef struct {
+    AstNode node;
+    Token name;
+} AstNodeVarAccess;
+
+/**
+ * @struct AstNodePrintStmt
+ * @brief Represents 'print expression;'
+ */
+typedef struct {
+    AstNode node;
+    AstNode* expression;
+} AstNodePrintStmt;
+
+/**
+ * @struct AstNodeExprStmt
+ * @brief Represents an expression used as a statement (e.g. 'x = 1;')
+ */
+typedef struct {
+    AstNode node;
+    AstNode* expression;
+} AstNodeExprStmt;
+
 // We will add more node types here (Assign, Access, etc)
 
 
 // --- Helper Functions ---
+
+AstNode* new_program_node(AstNode** statements, int count);
+AstNode* new_var_decl_node(Token name, AstNode* initializer);
+AstNode* new_var_access_node(Token name);
+AstNode* new_print_stmt_node(AstNode* expression);
+AstNode* new_expr_stmt_node(AstNode* expression);
 
 /**
  * @brief Creates a new Integer Literal AST node
@@ -112,4 +157,4 @@ void free_ast(AstNode* node);
 void print_ast(AstNode* node);
 
 
-#endif // AST_H
+#endif 
