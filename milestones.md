@@ -87,7 +87,7 @@ Grammar Rule: primary -> INT | IDENTIFIER | "(" expression ")" (INT and parens i
 ## Phase 3: The Type Checker (Semantic Analysis)
 
 Goal: Walk the AST to find and report errors before running the code. This is the core of type-safety.
-Status: Not Started (Next Step).
+Status: Complete
 
 - [x] Define Type System: In include/types.h, define your types (e.g., TYPE_INT, TYPE_BOOL, TYPE_STRING, TYPE_VOID).
 
@@ -120,7 +120,7 @@ Status: Not Started (Next Step).
 ## Phase 4: The 'Determa' VM & Bytecode
 
 Goal: "Run" the code. We will compile the AST to simple bytecode, then run that bytecode on our own Virtual Machine (VM). This is the standard way to integrate a GC.
-Status: Not Started (Next Step).
+Status: 100% Complete
 
 - [x] Define Bytecode (The "Chunk"):
 
@@ -132,7 +132,7 @@ Status: Not Started (Next Step).
 
 - [x] Create src/compiler.c.
 
-- [ ] Write a function compile(Node* ast) that walks the type-checked AST and emits bytecode instructions.
+- [x] Write a function compile(Node* ast) that walks the type-checked AST and emits bytecode instructions.
 
 ### The Virtual Machine (VM)
 
@@ -148,10 +148,30 @@ Status: Not Started (Next Step).
 
 - [x] Verify that OP_ADD correctly pops two numbers and pushes the sum.
 
-## Phase 5: The Interpreter (Execution)
+## Phase 5: The Garbage Collector (GC)
 
-Goal: "Run" the Abstract Syntax Tree to get a result.
-Status: To Be Started. (This is where the logic happens).
+Goal: Implement automatic memory management in the VM.
+Status: Not Started (Next Step).
+
+- [ ] Object System: In include/vm/object.h, define structs for heap-allocated objects (e.g., strings, lists).
+
+- [ ] Define Obj base struct (type tag, next pointer).
+
+- [ ] Define ObjString struct.
+
+- [ ] Memory Manager:
+
+- [ ] In src/vm/memory.c, write functions for allocate_object() and free_object().
+
+- [ ] Implement the GC (Mark-and-Sweep):
+
+- [ ] Mark Phase: Start from the VM's stack and globals, and "mark" every object that is still reachable.
+
+- [ ] Sweep Phase: Go through all allocated objects. If an object is not marked, free() it.
+
+- [ ] Integrate GC with VM:
+
+- [ ] The VM must trigger the GC (run_gc()) whenever it's about to run out of memory or hit a threshold.
 
 ### Syllabus Link: Module 6 (Undecidability)
 
