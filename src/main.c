@@ -11,13 +11,15 @@
 
 #include <stdio.h>
 #include <string.h> // For strcmp
-#include "parser.h" // --- NEW: Include our parser ---
-#include "ast.h"    // --- NEW: Include our AST ---
+#include "parser.h" 
+#include "ast.h"    
 
 int main(int argc, char* argv[]) {
-    // --- NEW: Simple argument parsing ---
     int pda_debug_mode = 0;
-    const char* source_string = "1 + 2 * 3;"; // Default test string
+    const char* source_string = 
+        "var x = 10;\n"
+        "var y = 20;\n"
+        "print x + y * 2;";; // Default test string
 
     if (argc > 1) {
         if (strcmp(argv[1], "--pda-debug") == 0) {
