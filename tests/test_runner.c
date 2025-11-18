@@ -25,11 +25,15 @@ int main(int argc, char* argv[]) {
     run_test(test_line_numbers, "Lexer - Line Number Increments");
     run_test(test_whitespace_and_comments, "Lexer - Whitespace and Comment Skipping");
 
-    // --- NEW TEST ---
-    printf("\n"); // Add a separator
-    run_test(test_parser_integer_literal, "Parser - Parsing a simple integer literal");
+    // Phase 2 (Parser) Test Suite
+    printf("\n"); // separator
+    run_test(test_parser_integer_literal, "Parser - Integer Literal");
+    run_test(test_parser_simple_binary_op, "Parser - Simple Binary Op");
+    run_test(test_parser_operator_precedence, "Parser - Operator Precedence");
+    run_test(test_pda_debug_output, "Parser - PDA Debug Output");
 
-    // --- Add more tests here as you build new modules ---
+
+    // --- Add more tests here as we build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");
 
     // --- Print the final summary ---
