@@ -71,3 +71,36 @@ void test_vm_arithmetic() {
     free_chunk(&chunk);
     free_vm();
 }
+
+
+void test_vm_precedence_manual() {
+    // Test: -5 + 10 (Order of ops check)
+    Chunk chunk;
+    init_chunk(&chunk);
+    init_vm();
+
+    // Push 5
+    int c1 = add_constant(&chunk, 5);
+    write_chunk(&chunk, OP_CONSTANT, 1);
+    write_chunk(&chunk, c1, 1);
+
+    // Negate (-5)
+    write_chunk(&chunk, OP_NEGATE, 1);
+
+    // Push 10
+    int c2 = add_constant(&chunk, 10);
+    write_chunk(&chunk, OP_CONSTANT, 1);
+    write_chunk(&chunk, c2, 1);
+
+    // Add
+    write_chunk(&chunk, OP_ADD, 1);
+    write_chunk(&chunk, OP_RETURN, 1);
+
+    interpret(&chunk);
+
+    Value result = peek(0);
+    CHECK(result == 5, "-5 + 10 should equal 5");
+
+    free_chunk(&chunk);
+    free_vm();
+}
