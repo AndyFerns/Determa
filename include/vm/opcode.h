@@ -23,6 +23,15 @@ typedef enum {
     OP_DIVIDE,       // Pop 2, Divide, Push result
     OP_NEGATE,       // Pop 1, Negate, Push result
 
+    // --- Variables ---
+    // Operand: [1 byte index]
+    // Action: Push globals[index] onto stack
+    OP_GET_GLOBAL, 
+    
+    // Operand: [1 byte index]
+    // Action: Pop stack, store in globals[index]
+    OP_SET_GLOBAL,  
+
     // --- Statements ---
     OP_PRINT,        // Pop 1, Print it
     OP_RETURN,       // Return from script (stop execution)
