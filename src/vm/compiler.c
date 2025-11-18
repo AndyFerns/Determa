@@ -148,3 +148,26 @@ static void compile_program(Compiler* compiler, AstNode* root) {
     emit_byte(compiler, OP_RETURN, 0); 
 }
 
+
+/**
+ * @brief Public interface to the compiler.
+ */
+int compile_ast(struct AstNode* ast, Chunk* chunk) {
+    Compiler compiler;
+    compiler.chunk = chunk;
+    compiler.hadError = 0;
+
+    if (ast->type != NODE_PROGRAM) {
+        fprintf(stderr, "Compiler Error: AST root must be PROGRAM\n");
+        return 0;
+    }
+
+    compile_program(&compiler, ast);
+    
+    if (compiler.hadError) {
+        // If an error occurred, the chunk is incomplete/corrupt
+        free_chunk(chunk);
+        return 0;
+    }
+    return 1;
+}
