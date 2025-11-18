@@ -122,31 +122,31 @@ Status: Not Started (Next Step).
 Goal: "Run" the code. We will compile the AST to simple bytecode, then run that bytecode on our own Virtual Machine (VM). This is the standard way to integrate a GC.
 Status: Not Started (Next Step).
 
-- [ ] Define Bytecode (The "Chunk"):
+- [x] Define Bytecode (The "Chunk"):
 
-- [ ] Create include/opcode.h (The instruction set: OP_RETURN, OP_CONSTANT, OP_ADD).
+- [x] Create include/opcode.h (The instruction set: OP_RETURN, OP_CONSTANT, OP_ADD).
 
-- [ ] Create src/chunk.c (A dynamic array module to hold the bytecode).
+- [x] Create src/chunk.c (A dynamic array module to hold the bytecode).
 
 ### The "Compiler" (AST -> Bytecode)
 
-- [ ] Create src/compiler.c.
+- [x] Create src/compiler.c.
 
 - [ ] Write a function compile(Node* ast) that walks the type-checked AST and emits bytecode instructions.
 
 ### The Virtual Machine (VM)
 
-- [ ] Create src/vm.c.
+- [x] Create src/vm.c.
 
-- [ ] Implement the "Fetch-Decode-Execute" loop.
+- [x] Implement the "Fetch-Decode-Execute" loop.
 
-- [ ] Implement the Value Stack (where 1 + 2 actually happens).
+- [x] Implement the Value Stack (where 1 + 2 actually happens).
 
 ### Unit Tests (VM module + bytecode testing)
 
-- [ ] Create tests/vm/test_vm.c.
+- [x] Create tests/vm/test_vm.c.
 
-- [ ] Verify that OP_ADD correctly pops two numbers and pushes the sum.
+- [x] Verify that OP_ADD correctly pops two numbers and pushes the sum.
 
 ## Phase 5: The Interpreter (Execution)
 
