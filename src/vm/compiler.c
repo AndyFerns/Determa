@@ -14,12 +14,25 @@
 #include "vm/opcode.h"
 #include "ast.h"
 #include "token.h"
+
 #include <stdio.h>
+#include <string.h>
+
+// This exists ONLY during compilation to map "x" -> 0.
+typedef struct {
+    Token name;
+    int index;
+} CompilerSymbol;
 
 // State for the compiler
 typedef struct {
     Chunk* chunk;
     int hadError;
+
+    // Simple linear symbol table for globals
+    // In a full compiler, this would be a hash map.
+    CompilerSymbol globals[256];
+    int globalCount;
 } Compiler;
 
 // --- Helper Functions ---
@@ -57,6 +70,33 @@ static void emit_binary_op(Compiler* compiler, TokenType opType, int line) {
     }
 }
 
+static int resolve_global(Compiler* compiler, Token name) {
+    for (int i = 0; i < compiler->globalCount; i++) {
+        Token* existing = &compiler->globals[i].name;
+        // String comparison
+        if (existing->length == name.length && 
+            strncmp(existing->lexeme, name.lexeme, name.length) == 0) {
+            return compiler->globals[i].index;
+        }
+    }
+    return -1;
+}
+
+// Creates a new global variable mapping
+static int define_global(Compiler* compiler, Token name) {
+    if (compiler->globalCount >= 256) {
+        fprintf(stderr, "Too many global variables.\n");
+        compiler->hadError = 1;
+        return 0;
+    }
+    int index = compiler->globalCount;
+    compiler->globals[index].name = name;
+    compiler->globals[index].index = index;
+    compiler->globalCount++;
+    return index;
+}
+
+
 // --- Recursive Compilation Logic (The AST Walker) ---
 
 /**
@@ -70,6 +110,25 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
             AstNodeIntLiteral* n = (AstNodeIntLiteral*)expr;
             // Emit instruction to load the constant onto the stack
             emit_constant(compiler, n->value, n->node.line);
+            break;
+        }
+
+        // Handles variable access (x + 1)
+        case NODE_VAR_ACCESS: {
+            AstNodeVarAccess* n = (AstNodeVarAccess*)expr;
+            
+            // 1. Look up the index
+            int index = resolve_global(compiler, n->name);
+            if (index == -1) {
+                // This should have been caught by TypeChecker, but safety first
+                fprintf(stderr, "Compiler Error: Undefined variable '%.*s'\n", n->name.length, n->name.lexeme);
+                compiler->hadError = 1;
+                return;
+            }
+            
+            // 2. Emit OP_GET_GLOBAL [INDEX]
+            emit_byte(compiler, OP_GET_GLOBAL, n->node.line);
+            emit_byte(compiler, (uint8_t)index, n->node.line);
             break;
         }
 
@@ -87,8 +146,6 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
             break;
         }
         
-        // TODO: Handle VAR_ACCESS later
-        
         default:
             fprintf(stderr, "Compiler Error: Unhandled expression node type %d\n", expr->type);
             compiler->hadError = 1;
@@ -104,11 +161,17 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
 
     switch (stmt->type) {
         case NODE_VAR_DECL: {
-            // Var decls require no runtime code for now (handled by VM stack later)
-            // But we must compile the initializer expression
             AstNodeVarDecl* n = (AstNodeVarDecl*)stmt;
+            
+            // 1. Compile the initializer (pushes 10 to stack)
             compile_expression(compiler, n->init);
-            // TODO: Emit OP_DEFINE_GLOBAL/LOCAL instruction here
+            
+            // 2. Assign a new index to 'x'
+            int index = define_global(compiler, n->name);
+            
+            // 3. Emit OP_SET_GLOBAL [INDEX] to pop 10 and store it in slot 0
+            emit_byte(compiler, OP_SET_GLOBAL, n->node.line);
+            emit_byte(compiler, (uint8_t)index, n->node.line);
             break;
         }
         
@@ -156,6 +219,7 @@ int compile_ast(struct AstNode* ast, Chunk* chunk) {
     Compiler compiler;
     compiler.chunk = chunk;
     compiler.hadError = 0;
+    compiler.globalCount = 0;   // start fresh for every compile
 
     if (ast->type != NODE_PROGRAM) {
         fprintf(stderr, "Compiler Error: AST root must be PROGRAM\n");
