@@ -206,11 +206,12 @@ void free_ast(AstNode* node) {
  * @param count 
  * @return AstNode* 
  */
-AstNode* new_program_node(AstNode** statements, int count) {
+AstNode* new_program_node(AstNode** statements, int count, int line) {
     AstNodeProgram* node = (AstNodeProgram*)malloc(sizeof(AstNodeProgram));
     if (!node) return NULL;
 
     node->node.type = NODE_PROGRAM;
+    node->node.line = line;
 
     // Initial dynamic array capacity
     node->capacity = (count > 0) ? count * 2 : 8;
@@ -270,12 +271,15 @@ void program_add_statement(AstNode* program_node, AstNode* statement) {
  * @param initializer 
  * @return AstNode* 
  */
-AstNode* new_var_decl_node(Token name, AstNode* initializer) {
+AstNode* new_var_decl_node(Token name, AstNode* initializer, int line) {
     AstNodeVarDecl* node = (AstNodeVarDecl*)malloc(sizeof(AstNodeVarDecl));
     if (!node) return NULL;
+
     node->node.type = NODE_VAR_DECL;
+    node->node.line = line;
     node->name = name;
     node->init = initializer;
+
     return (AstNode*)node;
 }
 
@@ -285,11 +289,14 @@ AstNode* new_var_decl_node(Token name, AstNode* initializer) {
  * @param name 
  * @return AstNode* 
  */
-AstNode* new_var_access_node(Token name) {
+AstNode* new_var_access_node(Token name, int line) {
     AstNodeVarAccess* node = (AstNodeVarAccess*)malloc(sizeof(AstNodeVarAccess));
     if (!node) return NULL;
+
     node->node.type = NODE_VAR_ACCESS;
+    node->node.line = line;
     node->name = name;
+
     return (AstNode*)node;
 }
 
@@ -299,33 +306,37 @@ AstNode* new_var_access_node(Token name) {
  * @param expression expression node whose value should be printed
  * @return AstNode* pointer to the newly allocated AstNode, or NULL on allocation failure
  */
-AstNode* new_print_stmt_node(AstNode* expression) {
+AstNode* new_print_stmt_node(AstNode* expression, int line) {
     AstNodePrintStmt* node = (AstNodePrintStmt*)malloc(sizeof(AstNodePrintStmt));
     if (!node) return NULL;
+
     node->node.type = NODE_PRINT_STMT;
+    node->node.line = line;
     node->expression = expression;
+
     return (AstNode*)node;
 }
 
 /**
  * @brief Creates a new Integer Literal AST node
  */
-AstNode* new_int_literal_node(int value) {
+AstNode* new_int_literal_node(int value, int line) {
     AstNodeIntLiteral* node = (AstNodeIntLiteral*)malloc(sizeof(AstNodeIntLiteral));
     if (node == NULL) return NULL;
     
     node->node.type = NODE_INT_LITERAL;
+    node->node.line = line;
     node->value = value;
+
     return (AstNode*)node;
 }
 
-AstNode* new_expr_stmt_node(AstNode* expression) {
-    // if (!expression) return NULL;  // defensive check
-
+AstNode* new_expr_stmt_node(AstNode* expression, int line) {
     AstNodeExprStmt* node = (AstNodeExprStmt*)malloc(sizeof(AstNodeExprStmt));
     if (!node) return NULL;
 
     node->node.type = NODE_EXPR_STMT;
+    node->node.line = line;
     node->expression = expression;
 
     return (AstNode*)node;
@@ -335,13 +346,30 @@ AstNode* new_expr_stmt_node(AstNode* expression) {
 /**
  * @brief Creates a new Binary Operator AST node
  */
-AstNode* new_binary_op_node(Token op, AstNode* left, AstNode* right) {
+AstNode* new_binary_op_node(Token op, AstNode* left, AstNode* right, int line) {
     AstNodeBinaryOp* node = (AstNodeBinaryOp*)malloc(sizeof(AstNodeBinaryOp));
     if (node == NULL) return NULL;
 
     node->node.type = NODE_BINARY_OP;
+    node->node.line = line;
     node->op = op;
     node->left = left;
     node->right = right;
+
+    return (AstNode*)node;
+}
+
+/**
+ * @brief Creates a new Variable Assignment AST node
+ */
+AstNode* new_var_assign_node(Token name, AstNode* expression, int line) {
+    AstNodeVarAssign* node = (AstNodeVarAssign*)malloc(sizeof(AstNodeVarAssign));
+    if (!node) return NULL;
+
+    node->node.type = NODE_VAR_ASSIGN;
+    node->node.line = line;
+    node->name = name;
+    node->expression = expression;
+
     return (AstNode*)node;
 }
