@@ -89,35 +89,66 @@ Grammar Rule: primary -> INT | IDENTIFIER | "(" expression ")" (INT and parens i
 Goal: Walk the AST to find and report errors before running the code. This is the core of type-safety.
 Status: Not Started (Next Step).
 
-- [ ] Define Type System: In include/types.h, define your types (e.g., TYPE_INT, TYPE_BOOL, TYPE_STRING, TYPE_VOID).
+- [x] Define Type System: In include/types.h, define your types (e.g., TYPE_INT, TYPE_BOOL, TYPE_STRING, TYPE_VOID).
 
-- [ ] Implement Type Checker:
+- [x] Implement Type Checker:
 
-- [ ] Create src/typechecker.c.
+- [x] Create src/typechecker.c.
 
-- [ ] Write a recursive "visitor" function check_node(Node* node) that walks the AST.
+- [x] Write a recursive "visitor" function check_node(Node* node) that walks the AST.
 
 ### Implement Rules
 
-- [ ] Type Mismatches: Check that (1 + "hello") is an error.
+- [x] Type Mismatches: Check that (1 + "hello") is an error.
 
-- [ ] Undeclared Variables: Check that print x; is an error if x wasn't declared.
+- [x] Undeclared Variables: Check that print x; is an error if x wasn't declared.
 
 - [ ] Wrong Arity: Check that print(x, y); is an error if print only takes one argument.
 
-- [ ] Symbol Table (Scopes):
+- [x] Symbol Table (Scopes):
 
-- [ ] Create src/symbol_table.c. This needs to be more advanced than a simple map.
+- [x] Create src/symbol_table.c. This needs to be more advanced than a simple map.
 
-- [ ] Implement "scopes" so variables in one function don't conflict with variables in another.
+- [x] Implement "scopes" so variables in one function don't conflict with variables in another.
 
 ### Unit Tests (Type Checker)
 
-- [ ] Create tests/typechecker/test_typechecker.c.
+- [x] Create tests/typechecker/test_typechecker.c.
 
-- [ ] Write tests that parse invalid code and assert that the type checker catches the correct error.
+- [x] Write tests that parse invalid code and assert that the type checker catches the correct error.
 
-## Phase 4: The Interpreter (Execution)
+## Phase 4: The 'Determa' VM & Bytecode
+
+Goal: "Run" the code. We will compile the AST to simple bytecode, then run that bytecode on our own Virtual Machine (VM). This is the standard way to integrate a GC.
+Status: Not Started (Next Step).
+
+- [ ] Define Bytecode (The "Chunk"):
+
+- [ ] Create include/opcode.h (The instruction set: OP_RETURN, OP_CONSTANT, OP_ADD).
+
+- [ ] Create src/chunk.c (A dynamic array module to hold the bytecode).
+
+### The "Compiler" (AST -> Bytecode)
+
+- [ ] Create src/compiler.c.
+
+- [ ] Write a function compile(Node* ast) that walks the type-checked AST and emits bytecode instructions.
+
+### The Virtual Machine (VM)
+
+- [ ] Create src/vm.c.
+
+- [ ] Implement the "Fetch-Decode-Execute" loop.
+
+- [ ] Implement the Value Stack (where 1 + 2 actually happens).
+
+### Unit Tests (VM module + bytecode testing)
+
+- [ ] Create tests/vm/test_vm.c.
+
+- [ ] Verify that OP_ADD correctly pops two numbers and pushes the sum.
+
+## Phase 5: The Interpreter (Execution)
 
 Goal: "Run" the Abstract Syntax Tree to get a result.
 Status: To Be Started. (This is where the logic happens).
@@ -156,7 +187,7 @@ IDNode: Look up the variable's value in the SymbolTable.
 
 - [ ] Result: This demonstrates your understanding of the Halting Problem (LO 6.4)—that you cannot statically prove a loop will halt, so you must use a dynamic guard.
 
-## Phase 4: Advanced Features (The "Wow" Factor)
+## Phase 6: Advanced Features (The "Wow" Factor)
 
 Goal: Integrate advanced TCS theory to make this a truly unique project.
 Status: To Be Started. (This is the resume polish).
@@ -177,7 +208,7 @@ Status: To Be Started. (This is the resume polish).
 
 - [ ] Error Reporting: Improve the Lexer and Parser to report errors with line numbers (e.g., Syntax Error: Expected ')' on line 5).
 
-## Phase 5: The "Compiler" Upgrade (Stretch Goal)
+## Phase 7: The "Compiler" Upgrade (Stretch Goal)
 
 Goal: Convert Determa code into another, lower-level language instead of running it.
 
