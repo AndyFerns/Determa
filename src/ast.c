@@ -206,12 +206,12 @@ void free_ast(AstNode* node) {
  * @param count 
  * @return AstNode* 
  */
-AstNode* new_program_node(AstNode** statements, int count, int line) {
+AstNode* new_program_node(AstNode** statements, int count) {
     AstNodeProgram* node = (AstNodeProgram*)malloc(sizeof(AstNodeProgram));
     if (!node) return NULL;
 
     node->node.type = NODE_PROGRAM;
-    node->node.line = line;
+    // node->node.line = line;
 
     // Initial dynamic array capacity
     node->capacity = (count > 0) ? count * 2 : 8;
