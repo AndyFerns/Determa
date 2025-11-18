@@ -84,7 +84,40 @@ Grammar Rule: primary -> INT | IDENTIFIER | "(" expression ")" (INT and parens i
 
 - [x] Write tests that feed tokens to the parser and check that the resulting AST structure is correct. (Expression tests are done!)
 
-## Phase 3: The Interpreter (Execution)
+## Phase 3: The Type Checker (Semantic Analysis)
+
+Goal: Walk the AST to find and report errors before running the code. This is the core of type-safety.
+Status: Not Started (Next Step).
+
+- [ ] Define Type System: In include/types.h, define your types (e.g., TYPE_INT, TYPE_BOOL, TYPE_STRING, TYPE_VOID).
+
+- [ ] Implement Type Checker:
+
+- [ ] Create src/typechecker.c.
+
+- [ ] Write a recursive "visitor" function check_node(Node* node) that walks the AST.
+
+### Implement Rules
+
+- [ ] Type Mismatches: Check that (1 + "hello") is an error.
+
+- [ ] Undeclared Variables: Check that print x; is an error if x wasn't declared.
+
+- [ ] Wrong Arity: Check that print(x, y); is an error if print only takes one argument.
+
+- [ ] Symbol Table (Scopes):
+
+- [ ] Create src/symbol_table.c. This needs to be more advanced than a simple map.
+
+- [ ] Implement "scopes" so variables in one function don't conflict with variables in another.
+
+### Unit Tests (Type Checker)
+
+- [ ] Create tests/typechecker/test_typechecker.c.
+
+- [ ] Write tests that parse invalid code and assert that the type checker catches the correct error.
+
+## Phase 4: The Interpreter (Execution)
 
 Goal: "Run" the Abstract Syntax Tree to get a result.
 Status: To Be Started. (This is where the logic happens).
