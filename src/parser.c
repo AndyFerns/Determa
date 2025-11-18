@@ -42,7 +42,8 @@ static AstNode* parse_expression(Parser* parser);
 static AstNode* parse_term(Parser* parser);
 static AstNode* parse_factor(Parser* parser);
 static AstNode* parse_primary(Parser* parser);
-
+static AstNode* parse_declaration(Parser* parser);
+static AstNode* parse_statement(Parser* parser);
 
 // --- Error Handling & Token Helpers ---
 
@@ -127,8 +128,9 @@ static int match(Parser* parser, TokenType types[], int count) {
  * primary -> NUMBER | "(" expression ")"
  */
 static AstNode* parse_primary(Parser* parser) {
+    TRACE_ENTER("Primary");
+    // It's a number literal
     if (check(parser, TOKEN_INT)) {
-        // It's a number literal
         char buf[64];
         int len = parser->current.length;
         if (len >= 63) len = 63; // Truncate if too long
@@ -142,8 +144,17 @@ static AstNode* parse_primary(Parser* parser) {
         return new_int_literal_node((int)val);
     }
 
+    // Handle identifier
+    if (check(parser, TOKEN_ID)) {
+        Token name = parser->current;
+        advance(parser);
+        TRACE_EXIT("Primary (VarAccess)");
+        return new_var_access_node(name);
+    }
+
+    // Consume '('
     if (check(parser, TOKEN_LPAREN)) {
-        advance(parser); // Consume '('
+        advance(parser); 
         AstNode* expr = parse_expression(parser); // Parse inner expression
         consume(parser, TOKEN_RPAREN, "Expected ')' after expression");
         TRACE_EXIT("Primary (Grouping)");
@@ -213,33 +224,168 @@ static AstNode* parse_expression(Parser* parser) {
     return node;
 }
 
+// --- Statement Parsing ---
+
+/**
+ * @brief Parses a print statement
+ * 
+ * Grammar:
+ * @code
+ print_statement → "print" expression ";"
+ @endcode
+ * 
+ * @note assumes the 'print' keyword has already been consumed
+ * by the caller. It parses the following expression, ensures that the
+ * statement ends with a semicolon, and returns a fully constructed
+ * `AstNodePrintStmt` node.
+ *
+ * PDA tracing is emitted when debug mode is enabled
+ * 
+ * @param parser Pointer to the parser instance
+ * @return AstNode* new print-statement AST node
+ */
+static AstNode* parse_print_statement(Parser* parser) {
+    TRACE_ENTER("PrintStmt");
+    AstNode* value = parse_expression(parser);
+    consume(parser, TOKEN_SEMICOLON, "Expected ';' after value");
+    TRACE_EXIT("PrintStmt");
+    return new_print_stmt_node(value);
+}
+
+/**
+ * @brief Parses a variable declaration
+ * 
+ * @details Grammar:
+ * @code
+ * var_declaration → IDENTIFIER ( "=" expression )? ";"
+ * @endcode
+ * 
+ * @param parser Pointer to the parser instance
+ * @return AstNode* variable-declaration AST node
+ */
+static AstNode* parse_var_declaration(Parser* parser) {
+    TRACE_ENTER("VarDecl");
+    consume(parser, TOKEN_ID, "Expected variable name");
+    Token name = parser->previous;
+    
+    AstNode* initializer = NULL;
+    if (match(parser, (TokenType[]){TOKEN_EQUALS}, 1)) {
+        initializer = parse_expression(parser);
+    }
+    
+    consume(parser, TOKEN_SEMICOLON, "Expected ';' after variable declaration");
+    TRACE_EXIT("VarDecl");
+    return new_var_decl_node(name, initializer);
+}
+
+/**
+ * @brief Handles executable statements (non-declaration)
+ * 
+ * eg: 
+ * @code 
+    print x + 1;
+    x + y * 2;
+    a = b + c;   // If assignment handled later
+   @endcode
+ * 
+ * @param parser 
+ * @return AstNode* 
+ */
+static AstNode* parse_statement(Parser* parser) {
+    TRACE_ENTER("Statement");
+    if (match(parser, (TokenType[]){TOKEN_PRINT}, 1)) {
+        AstNode* stmt = parse_print_statement(parser);
+        TRACE_EXIT("Statement (Print)");
+        return stmt;
+    }
+    
+    // If it's not a print statement, assume it's an expression statement
+    AstNode* expr = parse_expression(parser);
+    consume(parser, TOKEN_SEMICOLON, "Expected ';' after expression");
+    TRACE_EXIT("Statement (Expr)");
+    return new_expr_stmt_node(expr); 
+}
+
+/**
+ * @brief The top-level controller
+ * 
+ * It decides:
+ * If the next token is var → call parse_var_declaration
+ * Otherwise → treat it as a statement and call parse_statement
+ * 
+ * @param parser 
+ * @return AstNode* 
+ */
+static AstNode* parse_declaration(Parser* parser) {
+    TRACE_ENTER("Declaration");
+    if (match(parser, (TokenType[]){TOKEN_VAR}, 1)) {
+        AstNode* decl = parse_var_declaration(parser);
+        TRACE_EXIT("Declaration (Var)");
+        return decl;
+    }
+    AstNode* stmt = parse_statement(parser);
+    TRACE_EXIT("Declaration (Stmt)");
+    return stmt;
+}
 
 /**
  * @brief The main function to parse source code
+ *
+ * This function initializes a parser and begins the parsing process
+ *
+ * @param source The source code string to parse
+ * @param pda_debug_mode 0 to run silently, 1 to enable PDA trace logging
+ * 
+ * @return AstNode* The root of the generated AST (or NULL on error)
  */
 AstNode* parse(const char* source, int pda_debug_mode) {
-    // Set the debug mode
+    /* ---- Debug Mode Setup ---- */
     pda_debug_enabled = pda_debug_mode;
-    pda_debug_indent = 0;
+    pda_debug_indent  = 0;
 
+    /* ---- Init Parser State ---- */
     Parser parser;
-    parser.lexer = init_lexer(source);
+    parser.lexer     = init_lexer(source);
     parser.had_error = 0;
-    
-    // Prime the parser by loading the first token
-    advance(&parser);
-    
-    // For now, we only parse a single expression
-    AstNode* ast = parse_expression(&parser);
-    
-    // A simple program must end with a semicolon
-    consume(&parser, TOKEN_SEMICOLON, "Expected ';' after expression");
-    
-    // If we had an error, free the (partial) tree and return NULL
-    if (parser.had_error) {
-        free_ast(ast);
+
+    advance(&parser);     // Load first token
+
+    // Create Program Node 
+    AstNode* program = new_program_node(NULL, 0);
+
+    if (!program) {
+        fprintf(stderr, "Fatal: Failed to allocate program node.\n");
         return NULL;
     }
 
-    return ast;
+    // Parse Until EOF 
+    while (!check(&parser, TOKEN_EOF)) {
+
+        AstNode* stmt = parse_declaration(&parser);
+
+        if (stmt != NULL) {
+            program_add_statement(program, stmt);
+        } else {
+            // For now, if we hit an error, we might loop infinitely if we don't consume tokens.
+            // A simple sync is to advance until semicolon.
+            if (parser.had_error) {
+                 // Simple panic mode recovery: skip until next statement
+                 while (!check(&parser, TOKEN_EOF) && !check(&parser, TOKEN_SEMICOLON)) {
+                     advance(&parser);
+                 }
+                 if (check(&parser, TOKEN_SEMICOLON)) advance(&parser);
+                 parser.had_error = 0; // Reset error to try parsing next statement
+            } else {
+                break; 
+            }
+        }
+    }
+
+    // Final Error Check 
+    if (parser.had_error) {
+        free_ast(program);   // Clean up partial tree
+        return NULL;
+    }
+
+    return program;  // Success
 }
