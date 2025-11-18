@@ -11,6 +11,7 @@
 #include "test_lexer.h"
 #include "test_parser.h"
 #include "test_typechecker.h"
+#include "vm/test_vm.c"
 
 int main(int argc, char* argv[]) {
     // Suppress unused warnings
@@ -41,6 +42,10 @@ int main(int argc, char* argv[]) {
     run_test(test_tc_undefined_var, "TypeChecker - Undefined Variable Error");
     run_test(test_tc_redeclaration, "TypeChecker - Redeclaration Error");
 
+    // Phase 4 Tests (VM)
+    run_test(test_vm_initialization, "VM - Chunk & Constant Pool Basics");
+    run_test(test_vm_arithmetic, "VM - Execution: 1 + 2 = 3");
+    run_test(test_vm_precedence_manual, "VM - Execution: -5 + 10 = 5");
 
     // --- Add more tests here as we build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");
