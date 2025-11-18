@@ -12,8 +12,10 @@
  */
 
 #include "ast.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // --- Private Helper to print with indentation ---
 static void print_ast_recursive(AstNode* node, int indent) {
