@@ -6,8 +6,6 @@
 #ifndef TEST_VM_H
 #define TEST_VM_H
 
-void test_vm_initialization();
-void test_vm_arithmetic();        // NEW
-void test_vm_precedence_manual(); // NEW
+void test_vm_suite();
 
-#endif // TEST_VM_H
+#endif
