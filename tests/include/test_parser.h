@@ -11,4 +11,19 @@
  */
 void test_parser_integer_literal();
 
+/**
+ * @brief Tests parsing a simple binary operation (1 + 2)
+ */
+void test_parser_simple_binary_op();
+
+/**
+ * @brief Tests operator precedence (1 + 2 * 3)
+ */
+void test_parser_operator_precedence();
+
+/**
+ * @brief Tests the PDA debug output
+ */
+void test_pda_debug_output();
+
 #endif // TEST_PARSER_H
