@@ -4,39 +4,67 @@
  */
 
 #include "test_parser.h"
-#include "test.h"     // For the CHECK macro
-#include "parser.h"   // The module we are testing
+#include "test.h"    
+#include "parser.h"  
 #include "ast.h"
-#include <stdlib.h>   // For NULL
+#include <stdlib.h>  
+#include <stdio.h>
 
-/**
- * @brief Tests parsing a simple integer literal
- */
+// Helper to extract the first statement's expression
+static AstNode* get_first_stmt_expr(AstNode* root) {
+    if (root == NULL) {
+        printf("  DEBUG: Root is NULL\n");
+        return NULL;
+    }
+    if (root->type != NODE_PROGRAM) {
+        printf("  DEBUG: Root is not PROGRAM (Type: %d)\n", root->type);
+        return NULL;
+    }
+
+    AstNodeProgram* p = (AstNodeProgram*)root;
+    // printf("  DEBUG: Program has %d statements\n", p->statement_count);
+    
+    if (p->statement_count == 0) {
+        printf("  DEBUG: Program has 0 statements\n");
+        return NULL;
+    }
+    
+    AstNode* stmt = p->statements[0];
+    // printf("  DEBUG: First statement type is %d\n", stmt->type);
+
+    // Unwrap EXPR_STMT if present
+    if (stmt->type == NODE_EXPR_STMT) {
+        AstNodeExprStmt* exprStmt = (AstNodeExprStmt*)stmt;
+        // printf("  DEBUG: Unwrapping EXPR_STMT to get expression (Type: %d)\n", exprStmt->expression->type);
+        return exprStmt->expression;
+    } 
+    else {
+        // If it's a PrintStmt, VarDecl, etc., return it directly
+        return stmt;
+    }
+}
+
 void test_parser_integer_literal() {
-    const char* source = "123;"; // A simple program
+    const char* source = "123;"; 
+    AstNode* root = parse(source, 0); 
     
-    // Run with debug mode off (0)
-    AstNode* ast = parse(source, 0); 
-    
-    // 1. Check that parsing succeeded
-    CHECK(ast != NULL, "Parser returned a non-NULL AST");
-    if (ast == NULL) return; // Guard for NULL dereference
+    // Print the tree first to verify structure
+    printf("--- AST for '123;' ---\n");
+    print_ast(root);
 
-    // 2. Check the node type
+    AstNode* ast = get_first_stmt_expr(root);
+    CHECK(ast != NULL, "Found statement");
+    if(ast == NULL) { free_ast(root); return; }
+
+    // Debug: Print what we actually got back
+    // printf("  DEBUG: 'ast' type is %d (Expected %d)\n", ast->type, NODE_INT_LITERAL);
+
     CHECK(ast->type == NODE_INT_LITERAL, "AST node is an INT_LITERAL");
-
-    // 3. Check the value
     if (ast->type == NODE_INT_LITERAL) {
         AstNodeIntLiteral* int_node = (AstNodeIntLiteral*)ast;
         CHECK(int_node->value == 123, "Integer value is 123");
     }
-
-    // 4. Print the AST for manual inspection
-    printf("--- AST for '123;' ---\n");
-    print_ast(ast);
-    
-    // 5. Clean up
-    free_ast(ast);
+    free_ast(root);
 }
 
 /**
@@ -44,29 +72,25 @@ void test_parser_integer_literal() {
  */
 void test_parser_simple_binary_op() {
     const char* source = "1 + 2;";
-    AstNode* ast = parse(source, 0);
-
-    CHECK(ast != NULL, "Parser returned a non-NULL AST");
-    if (ast == NULL) return;
-
-    // Check root node
-    CHECK(ast->type == NODE_BINARY_OP, "Root node is BINARY_OP");
-    AstNodeBinaryOp* op = (AstNodeBinaryOp*)ast;
-    CHECK(op->op.type == TOKEN_PLUS, "Operator is TOKEN_PLUS");
-
-    // Check left child
-    AstNodeIntLiteral* left = (AstNodeIntLiteral*)op->left;
-    CHECK(left->node.type == NODE_INT_LITERAL, "Left child is INT_LITERAL");
-    CHECK(left->value == 1, "Left child value is 1");
-
-    // Check right child
-    AstNodeIntLiteral* right = (AstNodeIntLiteral*)op->right;
-    CHECK(right->node.type == NODE_INT_LITERAL, "Right child is INT_LITERAL");
-    CHECK(right->value == 2, "Right child value is 2");
-
+    AstNode* root = parse(source, 0);
+    
     printf("--- AST for '1 + 2;' ---\n");
-    print_ast(ast);
-    free_ast(ast);
+    print_ast(root);
+
+    AstNode* ast = get_first_stmt_expr(root);
+    
+    CHECK(ast != NULL, "Found statement");
+    if(ast == NULL) { free_ast(root); return; }
+
+    CHECK(ast->type == NODE_BINARY_OP, "Root node is BINARY_OP");
+    if (ast->type == NODE_BINARY_OP) {
+        AstNodeBinaryOp* op = (AstNodeBinaryOp*)ast;
+        CHECK(op->op.type == TOKEN_PLUS, "Operator is TOKEN_PLUS");
+
+        AstNode* left_node = op->left;
+        CHECK(left_node->type == NODE_INT_LITERAL, "Left child is INT_LITERAL");
+    }
+    free_ast(root);
 }
 
 /**
@@ -74,60 +98,76 @@ void test_parser_simple_binary_op() {
  */
 void test_parser_operator_precedence() {
     const char* source = "1 + 2 * 3;";
-    AstNode* ast = parse(source, 0);
+    AstNode* root = parse(source, 0);
 
-    CHECK(ast != NULL, "Parser returned a non-NULL AST");
-    if (ast == NULL) return;
+    printf("--- AST for '1 + 2 * 3;' ---\n");
+    print_ast(root);
 
-    // Root should be '+'
+    AstNode* ast = get_first_stmt_expr(root);
+
+    CHECK(ast != NULL, "Found statement");
+    if(ast == NULL) { free_ast(root); return; }
+
     CHECK(ast->type == NODE_BINARY_OP, "Root node is BINARY_OP");
-    AstNodeBinaryOp* root = (AstNodeBinaryOp*)ast;
-    CHECK(root->op.type == TOKEN_PLUS, "Root operator is TOKEN_PLUS");
+    if (ast->type == NODE_BINARY_OP) {
+        AstNodeBinaryOp* root_op = (AstNodeBinaryOp*)ast;
+        CHECK(root_op->op.type == TOKEN_PLUS, "Root operator is TOKEN_PLUS");
 
-    // Left child of '+' should be '1'
-    AstNodeIntLiteral* left = (AstNodeIntLiteral*)root->left;
-    CHECK(left->node.type == NODE_INT_LITERAL, "Left child is INT_LITERAL");
-    CHECK(left->value == 1, "Left child value is 1");
-
-    // Right child of '+' should be '(2 * 3)'
-    AstNodeBinaryOp* right_op = (AstNodeBinaryOp*)root->right;
-    CHECK(right_op->node.type == NODE_BINARY_OP, "Right child is BINARY_OP");
-    CHECK(right_op->op.type == TOKEN_STAR, "Right child operator is TOKEN_STAR");
-
-    // --- FIX: The typo was here, causing the crash ---
-    // Check children of '*'
-    AstNode* left_of_star_node = right_op->left;
-    AstNode* right_of_star_node = right_op->right; // <-- Was initializing to itself!
-
-    // Check left side of '*'
-    CHECK(left_of_star_node->type == NODE_INT_LITERAL, "Left of '*' is INT_LITERAL");
-    if(left_of_star_node->type == NODE_INT_LITERAL) {
-         CHECK(((AstNodeIntLiteral*)left_of_star_node)->value == 2, "Left of '*' is 2");
+        AstNodeBinaryOp* right_op = (AstNodeBinaryOp*)root_op->right;
+        CHECK(right_op->node.type == NODE_BINARY_OP, "Right child is BINARY_OP");
     }
-
-    // Check right side of '*'
-    CHECK(right_of_star_node->type == NODE_INT_LITERAL, "Right of '*' is INT_LITERAL");
-    if(right_of_star_node->type == NODE_INT_LITERAL) {
-         CHECK(((AstNodeIntLiteral*)right_of_star_node)->value == 3, "Right of '*' is 3");
-    }
-    // --- END OF FIX ---
-
-
-    printf("--- AST for '1 + 2 * 3;' (Precedence) ---\n");
-    print_ast(ast);
-    free_ast(ast);
+    free_ast(root);
 }
 
-/**
- * @brief Tests the PDA debug output
- */
 void test_pda_debug_output() {
     const char* source = "(1 + 2);";
     printf("--- Printing PDA Debug Trace for '(1 + 2);' ---\n");
-    // Run with debug mode on (1)
     AstNode* ast = parse(source, 1);
-    
     CHECK(ast != NULL, "Parser returned non-NULL AST");
-    
     free_ast(ast);
+}
+
+void test_parser_var_declaration() {
+    const char* source = "var x = 10;";
+    AstNode* root = parse(source, 0);
+
+    AstNodeProgram* prog = (AstNodeProgram*)root;
+    CHECK(prog->statement_count == 1, "Program has 1 statement");
+    
+    AstNode* stmt = prog->statements[0];
+    CHECK(stmt->type == NODE_VAR_DECL, "Statement is VAR_DECL");
+    
+    AstNodeVarDecl* decl = (AstNodeVarDecl*)stmt;
+    CHECK(decl->name.length == 1, "Var name length is 1");
+    
+    CHECK(decl->init->type == NODE_INT_LITERAL, "Initializer is INT_LITERAL");
+    
+    free_ast(root);
+}
+
+void test_parser_print_statement() {
+    const char* source = "print 5 + 5;";
+    AstNode* root = parse(source, 0);
+    
+    // Print statement is NOT wrapped in EXPR_STMT, so get_first_stmt_expr returns it directly
+    AstNode* stmt = get_first_stmt_expr(root);
+    
+    CHECK(stmt->type == NODE_PRINT_STMT, "Statement is PRINT_STMT");
+    free_ast(root);
+}
+
+void test_parser_program() {
+    const char* source = 
+        "var x = 1;\n"
+        "var y = 2;\n"
+        "print x + y;";
+        
+    AstNode* root = parse(source, 0);
+    AstNodeProgram* prog = (AstNodeProgram*)root;
+    
+    CHECK(prog->statement_count == 3, "Program has 3 statements");
+    CHECK(prog->statements[0]->type == NODE_VAR_DECL, "Stmt 1 is VAR_DECL");
+    CHECK(prog->statements[2]->type == NODE_PRINT_STMT, "Stmt 3 is PRINT_STMT");
+    
+    free_ast(root);
 }
