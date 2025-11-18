@@ -16,14 +16,24 @@ SET COMPILER_EXE=bin\determa.exe
 SET TEST_RUNNER_EXE=bin\determa_test.exe
 
 REM --- Source Files ---
-REM Source for the compiler library (shared by both)
-SET LIB_SOURCES=^
+REM 1. Frontend (Lexer, Parser, TypeChecker) - In src/
+SET FRONTEND_SOURCES= ^
     src\lexer.c ^
     src\token.c ^
     src\parser.c ^
     src\ast.c ^
     src\symbol.c ^
     src\typechecker.c
+
+REM 2. Backend (VM, Bytecode, Compiler) - In src/vm/
+REM Note: These files don't exist yet, but we are prepping for them!
+SET BACKEND_SOURCES= ^
+    src\vm\chunk.c ^
+    src\vm\vm.c ^
+    src\vm\compiler.c
+
+REM Combine Lib Sources
+SET LIB_SOURCES=%FRONTEND_SOURCES% %BACKEND_SOURCES%
 
 REM Source for the main compiler executable
 SET COMPILER_SOURCES=^
@@ -37,6 +47,7 @@ SET TEST_SOURCES=^
     tests\lexer\test_lexer.c ^
     tests\parser\test_parser.c ^
     tests\typechecker\test_typechecker.c ^
+    tests\vm\test_vm.c ^
     %LIB_SOURCES%
 
 REM --- Compilation Step ---
