@@ -9,8 +9,7 @@
  * @version 0.1
  * @date 2025-11-18
  * 
- * @copyright Copyright (c) 2025
- * 
+ * © 2025
  */
 
 #ifndef AST_H
@@ -43,6 +42,7 @@ typedef enum {
  */
 typedef struct AstNode {
     AstNodeType type;
+    int line;           // Line number for debugging information
 } AstNode;
 
 
@@ -122,117 +122,72 @@ typedef struct {
 
 /**
  * @struct AstNodeExprStmt
- * @brief Represents an expression used as a statement (e.g. 'x = 1;')
+ * @brief Represents an expression used as a statement
  */
 typedef struct {
     AstNode node;
     AstNode* expression;
 } AstNodeExprStmt;
 
-// We will add more node types here (Assign, Access, etc)
 
 // ========================
 // --- Helper Functions ---
 // ========================
 
-/**
- * @brief Creates a new Variable Declaration AST node.
- * @param name The identifier token representing the variable name.
- * @param initializer The initializer expression node (can be NULL).
- * @return A pointer to the newly allocated AstNode, or NULL on allocation failure.
- */
 AstNode* new_program_node(AstNode** statements, int count);
-
-// /**
-//  * @brief Creates a new Variable Declaration AST node.
-//  * 
-//  * @return AstNode* A pointer to the newly allocated AstNode, or NULL on allocation failure.
-//  */
-// AstNode* new_program_node();
 
 /**
  * @brief Adds a statement to the Program node
- * 
- * Helper Function for NODE_PROGRAM
- * 
- * @param program_node pointer to an AstNodeProgram (base AstNode ptr)
- * @param statement Pointer to a list of statements required to be appended
  */
 void program_add_statement(AstNode* program_node, AstNode* statement);
 
 /**
- * @brief Creates a new Variable Access AST node.
- * 
+ * @brief Creates a new Variable Declaration AST node.
+ *
  * @param name identifier token representing the variable name
- * @param initializer 
- * @return AstNode* 
+ * @param initializer
+ * @param line Line number for debugging
  */
-AstNode* new_var_decl_node(Token name, AstNode* initializer);
+AstNode* new_var_decl_node(Token name, AstNode* initializer, int line);
 
 /**
  * @brief Creates a new Variable Access AST node.
- *
- * Represents reading a variable's value (e.g., `x`).
- *
- * @param name The identifier token for the variable being accessed
- * @return Pointer to the newly allocated AstNode, or NULL on allocation failure
  */
-AstNode* new_var_access_node(Token name);
+AstNode* new_var_access_node(Token name, int line);
 
 /**
  * @brief Creates a new Print Statement AST node.
- *
- * Represents: `print expression;`
- *
- * The print statement wraps a single expression which will be evaluated
- * and sent to the output stream when executed.
- *
- * @param expression The expression node whose value should be printed.
- * @return A pointer to the newly allocated AstNode, or NULL on allocation failure.
  */
-AstNode* new_print_stmt_node(AstNode* expression);
+AstNode* new_print_stmt_node(AstNode* expression, int line);
 
 /**
  * @brief Creates a new Expression Statement AST node.
- *
- * An expression-statement is any expression used as a standalone statement.
- * Examples:
- *   - `x = 10;`
- *   - `1 + 2;`
- *
- * @param expression The expression to wrap as a statement (must not be NULL).
- * @return A pointer to the newly allocated AstNodeExprStmt, or NULL on allocation failure.
  */
-AstNode* new_expr_stmt_node(AstNode* expression);
+AstNode* new_expr_stmt_node(AstNode* expression, int line);
 
 /**
  * @brief Creates a new Integer Literal AST node
- * @param value The integer value
- * @return A pointer to the new AstNode
  */
-AstNode* new_int_literal_node(int value);
+AstNode* new_int_literal_node(int value, int line);
 
 /**
  * @brief Creates a new Binary Operator AST node
- * @param op The operator token
- * @param left The left-hand side expression
- * @param right The right-hand side expression
- * @return A pointer to the new AstNode
  */
-AstNode* new_binary_op_node(Token op, AstNode* left, AstNode* right);
+AstNode* new_binary_op_node(Token op, AstNode* left, AstNode* right, int line);
 
+/**
+ * @brief Creates a new Variable Assignment AST node
+ */
+AstNode* new_var_assign_node(Token name, AstNode* expression, int line);
 
 /**
  * @brief Frees an entire AST tree recursively
- * @param node The root node of the tree to free
  */
 void free_ast(AstNode* node);
 
 /**
- * @brief Prints an AST tree to the console (for debugging)
- * @param node The root node of the tree to print
+ * @brief Prints an AST tree
  */
 void print_ast(AstNode* node);
 
-
-#endif 
+#endif
