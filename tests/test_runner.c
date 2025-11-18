@@ -31,7 +31,9 @@ int main(int argc, char* argv[]) {
     run_test(test_parser_simple_binary_op, "Parser - Simple Binary Op");
     run_test(test_parser_operator_precedence, "Parser - Operator Precedence");
     run_test(test_pda_debug_output, "Parser - PDA Debug Output");
-
+    run_test(test_parser_var_declaration, "Parser - Var Declaration");
+    run_test(test_parser_print_statement, "Parser - Print Statement");
+    run_test(test_parser_program, "Parser - Full Program");
 
     // --- Add more tests here as we build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");
