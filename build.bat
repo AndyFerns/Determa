@@ -21,7 +21,9 @@ SET LIB_SOURCES=^
     src\lexer.c ^
     src\token.c ^
     src\parser.c ^
-    src\ast.c
+    src\ast.c ^
+    src\symbol.c ^
+    src\typechecker.c
 
 REM Source for the main compiler executable
 SET COMPILER_SOURCES=^
@@ -34,6 +36,7 @@ SET TEST_SOURCES=^
     tests\test.c ^
     tests\lexer\test_lexer.c ^
     tests\parser\test_parser.c ^
+    tests\typechecker\test_typechecker.c ^
     %LIB_SOURCES%
 
 REM --- Compilation Step ---
