@@ -6,7 +6,8 @@
 #ifndef TEST_VM_H
 #define TEST_VM_H
 
-// A simple sanity check to ensure the VM infrastructure links correctly
 void test_vm_initialization();
+void test_vm_arithmetic();        // NEW
+void test_vm_precedence_manual(); // NEW
 
 #endif // TEST_VM_H
