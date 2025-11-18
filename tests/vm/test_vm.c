@@ -35,3 +35,39 @@ void test_vm_initialization() {
     CHECK(chunk.count == 0, "Chunk count should be 0 after free");
     CHECK(chunk.code == NULL, "Chunk code should be NULL after free");
 }
+
+
+
+void test_vm_arithmetic() {
+    // Test: 1 + 2
+    Chunk chunk;
+    init_chunk(&chunk);
+    init_vm();
+
+    // 1. Push Constant 1
+    int c1 = add_constant(&chunk, 1);
+    write_chunk(&chunk, OP_CONSTANT, 1);
+    write_chunk(&chunk, c1, 1);
+
+    // 2. Push Constant 2
+    int c2 = add_constant(&chunk, 2);
+    write_chunk(&chunk, OP_CONSTANT, 1);
+    write_chunk(&chunk, c2, 1);
+
+    // 3. Add
+    write_chunk(&chunk, OP_ADD, 1);
+
+    // 4. Return
+    write_chunk(&chunk, OP_RETURN, 1);
+
+    // Run!
+    interpret(&chunk);
+
+    // Check Result
+    // Stack should have 1 item: result 3
+    Value result = peek(0);
+    CHECK(result == 3, "1 + 2 should equal 3");
+
+    free_chunk(&chunk);
+    free_vm();
+}
