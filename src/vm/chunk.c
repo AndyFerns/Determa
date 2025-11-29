@@ -52,9 +52,10 @@ void free_value_array(ValueArray* array) {
     init_value_array(array);
 }
 
-void print_value(Value value) {
-    printf("%d", value);
-}
+// refactored and changed location to value.c
+// void print_value(Value value) {
+//     printf("%d", value);
+// }
 
 
 // --- Chunk Implementation ---
