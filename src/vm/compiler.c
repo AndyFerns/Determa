@@ -171,7 +171,7 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
         case NODE_INT_LITERAL: {
             AstNodeIntLiteral* n = (AstNodeIntLiteral*)expr;
             // Emit instruction to load the constant onto the stack
-            emit_constant(compiler, n->value, n->node.line);
+            emit_constant(compiler, INT_VAL(n->value), (n->node.line));
             break;
         }
 
