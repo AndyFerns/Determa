@@ -9,18 +9,22 @@
  * 
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>   // for uint8_t
+
 #include "vm/compiler.h"
 #include "vm/chunk.h"
 #include "vm/opcode.h"
 #include "ast.h"
 #include "token.h"
 
-#include <stdio.h>
-#include <string.h>
 
 // This exists ONLY during compilation to map "x" -> 0.
 typedef struct {
-    Token name;
+    char* name;
+    int length;
     int index;
 } CompilerSymbol;
 
@@ -40,7 +44,21 @@ typedef struct {
  * 
  * @return void
  */
-void init_compiler() {
+void init_compiler(void) {
+    globalCount = 0;
+}
+
+/**
+ * @brief Free Global symbols helper function
+ * call on shutdown or before resetting the compiler
+ */
+void free_global_symbols(void) {
+    for (int i = 0; i < globalCount; i++) {
+        free(globalSymbols[i].name);
+        globalSymbols[i].name = NULL;
+        globalSymbols[i].length = 0;
+        globalSymbols[i].index = -1;
+    }
     globalCount = 0;
 }
 
@@ -60,6 +78,18 @@ static void emit_byte(Compiler* compiler, uint8_t byte, int line) {
 static void emit_constant(Compiler* compiler, Value value, int line) {
     // 1. Add the actual value to the constant pool
     int constantIndex = add_constant(compiler->chunk, value);
+
+    if (constantIndex < 0) {
+        fprintf(stderr, "Compiler Error: failed to add constant (index < 0)\n");
+        compiler->hadError = 1;
+        return;
+    }
+
+    if (constantIndex > 0xFF) {
+        fprintf(stderr, "Compiler Error: too many constants (>=256). Add wide-constant support.\n");
+        compiler->hadError = 1;
+        return;
+    }
     
     // 2. Emit the instruction and the operand (index)
     emit_byte(compiler, OP_CONSTANT, line);
@@ -76,17 +106,20 @@ static void emit_binary_op(Compiler* compiler, TokenType opType, int line) {
         case TOKEN_MINUS: emit_byte(compiler, OP_SUBTRACT, line); break;
         case TOKEN_STAR:  emit_byte(compiler, OP_MULTIPLY, line); break;
         case TOKEN_SLASH: emit_byte(compiler, OP_DIVIDE, line); break;
-        default: break; // Should not happen after type checking
+        default:
+            fprintf(stderr, "Compiler Error: Unsupported binary operator token %d\n", opType);
+            compiler->hadError = 1;
+            break;
     }
 }
 
 static int resolve_global(Compiler* compiler, Token name) {
     (void)compiler;
     for (int i = 0; i < globalCount; i++) {
-        Token* existing = &globalSymbols[i].name;
+        CompilerSymbol* existing = &globalSymbols[i];
         // String comparison
         if (existing->length == name.length && 
-            strncmp(existing->lexeme, name.lexeme, name.length) == 0) {
+            strncmp(existing->name, name.lexeme, name.length) == 0) {
             return globalSymbols[i].index;
         }
     }
@@ -100,9 +133,27 @@ static int define_global(Compiler* compiler, Token name) {
         compiler->hadError = 1;
         return 0;
     }
+    // Check if already defined (optional, but good for safety)
+    int existing = resolve_global(compiler, name);
+    if (existing != -1) return existing;
+
     int index = globalCount;
-    globalSymbols[index].name = name;
+    
+    // ALLOCATE MEMORY for the name
+    char* nameCopy = (char*)malloc(name.length + 1);
+    if (!nameCopy) {
+        fprintf(stderr, "Out of memory while defining global variable.\n");
+        compiler->hadError = 1;
+        return -1;
+    }
+
+    memcpy(nameCopy, name.lexeme, name.length);
+    nameCopy[name.length] = '\0';
+
+    globalSymbols[index].name = nameCopy;
+    globalSymbols[index].length = name.length;
     globalSymbols[index].index = index;
+    
     globalCount++;
     return index;
 }
@@ -143,6 +194,15 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
             break;
         }
 
+        case NODE_UNARY_OP: {
+            AstNodeUnaryOp* n = (AstNodeUnaryOp*)expr;
+            compile_expression(compiler, n->operand);
+            if (n->op.type == TOKEN_MINUS) {
+                emit_byte(compiler, OP_NEGATE, n->op.line);
+            }
+            break;
+        }
+
         case NODE_BINARY_OP: {
             AstNodeBinaryOp* n = (AstNodeBinaryOp*)expr;
             
@@ -179,6 +239,10 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
             
             // 2. Assign a new index to 'x'
             int index = define_global(compiler, n->name);
+            if (index == -1) {
+                // define_global already set hadError
+                return;
+            }
             
             // 3. Emit OP_SET_GLOBAL [INDEX] to pop 10 and store it in slot 0
             emit_byte(compiler, OP_SET_GLOBAL, n->node.line);
@@ -198,8 +262,11 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
         case NODE_EXPR_STMT: {
             AstNodeExprStmt* n = (AstNodeExprStmt*)stmt;
             compile_expression(compiler, n->expression);
+            if (compiler->hadError) return;
             // Pop the resulting value of the expression, since it's a statement
             // TODO: Emit OP_POP
+            // emit_byte(compiler, OP_POP, n->node.line;
+
             break;
         }
 
@@ -217,6 +284,7 @@ static void compile_program(Compiler* compiler, AstNode* root) {
     AstNodeProgram* prog = (AstNodeProgram*)root;
     for (int i = 0; i < prog->statement_count; i++) {
         compile_statement(compiler, prog->statements[i]);
+        if (compiler->hadError) return;
     }
     // Every chunk must end with a return instruction
     emit_byte(compiler, OP_RETURN, 0); 
