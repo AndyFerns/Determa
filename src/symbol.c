@@ -18,6 +18,18 @@
 #include <string.h>
 #include <stdio.h>
 
+// Helper to duplicate a string
+static char* copy_string(const char* chars, int length) {
+    char* string = (char*)malloc(length + 1);
+    if (string == NULL) {
+        fprintf(stderr, "Not enough memory for symbol name.\n");
+        exit(1);
+    }
+    memcpy(string, chars, length);
+    string[length] = '\0';
+    return string;
+}
+
 /**
  * @brief Initialize a symbol table.
  *
@@ -46,12 +58,12 @@ void symbol_table_init(SymbolTable* table) {
  * @param table Pointer to the SymbolTable to free.
  */
 void symbol_table_free(SymbolTable* table) {
-    if (table->symbols) {
-        free(table->symbols);
+    // Free the allocated name strings
+    for (int i = 0; i < table->count; i++) {
+        free((void*)table->symbols[i].name);
     }
-    table->symbols = NULL;
+    free(table->symbols);
     table->count = 0;
-    table->capacity = 0;
 }
 
 /**
@@ -74,13 +86,10 @@ void symbol_table_enter_scope(SymbolTable* table) {
  * @param table Pointer to the symbol table.
  */
 void symbol_table_exit_scope(SymbolTable* table) {
-    while (table->count > 0) {
-        Symbol* s = &table->symbols[table->count - 1];
-
-        if (s->depth != table->current_depth)
-            break;
+    while (table->count > 0 && table->symbols[table->count - 1].depth == table->current_depth) {
 
         table->count--;
+        free((void*)table->symbols[table->count].name); // Free the name
     }
 
     table->current_depth--;
@@ -129,7 +138,7 @@ int symbol_table_define(SymbolTable* table, const char* name, int len, DataType 
 
     // Insert new symbol
     Symbol* s = &table->symbols[table->count++];
-    s->name = name;    // Assumes caller-owned lifetime
+    s->name = copy_string(name, len);       // Assumes caller-owned lifetime
     s->name_len = len;
     s->type = type;
     s->depth = table->current_depth;
