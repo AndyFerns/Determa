@@ -8,7 +8,10 @@
 #define VM_VALUE_H
 
 #include "common.h"
+#include "object.h"
 
+// Forward declaration of Obj (defined in object.h)
+typedef struct Obj Obj;
 
 /**
  * @enum Value Type It stores the total types of values identifiable by the language
@@ -17,8 +20,8 @@
  */
 typedef enum {
     VAL_BOOL,
-    VAL_INT
-    // VAL_OBJ, TODO
+    VAL_INT,
+    VAL_OBJ
 } ValueType;
 
 
@@ -27,21 +30,24 @@ typedef struct {
     union {
         bool boolean;
         int integer;
-        // Obj* Obj // TODO
+        Obj* obj; // TODO
     } as;
 } Value;
 
 // --- Macros for Type Checking ---
 #define IS_BOOL(value)    ((value).type == VAL_BOOL)
 #define IS_INT(value)     ((value).type == VAL_INT)
+#define IS_OBJ(value)     ((value).type == VAL_OBJ)
 
 // --- Macros for Unwrapping Values (Unsafe - Check type first!) ---
 #define AS_BOOL(value)    ((value).as.boolean)
 #define AS_INT(value)     ((value).as.integer)
+#define AS_OBJ(value)     ((value).as.obj)
 
 // --- Macros for Creating Values ---
 #define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
 #define INT_VAL(value)    ((Value){VAL_INT, {.integer = value}})
+#define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
 
 /**
