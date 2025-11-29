@@ -8,10 +8,13 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "vm/vm.h"
 #include "vm/opcode.h"
 #include "vm/common.h"
 #include "vm/value.h"
+#include "vm/object.h" // Need this to access ObjString struct for freeing
 
 // The global VM instance (single VM model)
 VM vm;
@@ -28,16 +31,33 @@ static void reset_stack() {
  */
 void init_vm() {
     reset_stack();
+    vm.objects = NULL; // Initialize the tracker list
+}
+
+// --- Helper to free a single object ---
+static void free_object(Obj* object) {
+    switch (object->type) {
+        case OBJ_STRING: {
+            ObjString* string = (ObjString*)object;
+            free(string->chars); // Free the character array
+            free(string);        // Free the struct itself
+            break;
+        }
+    }
 }
 
 /**
- * @brief Free VM resources.
- *
- * Currently unused because the VM uses static arrays,
- * but remains for future heap-managed values.
+ * @brief Free VM resources for heap-managed resources
  */
 void free_vm() {
-    // No dynamic allocations yet.
+    // Walk the linked list and free every object
+    Obj* object = vm.objects;
+    while (object != NULL) {
+        Obj* next = object->next;
+        free_object(object);
+        object = next;
+    }
+    vm.objects = NULL;
 }
 
 // -----------------------------------------------------------------------------
