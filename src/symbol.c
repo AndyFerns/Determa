@@ -23,7 +23,7 @@ static char* copy_string(const char* chars, int length) {
     char* string = (char*)malloc(length + 1);
     if (string == NULL) {
         fprintf(stderr, "Not enough memory for symbol name.\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     memcpy(string, chars, length);
     string[length] = '\0';
@@ -52,8 +52,8 @@ void symbol_table_init(SymbolTable* table) {
 /**
  * @brief Free the memory used by the symbol table.
  *
- * Does not free symbol names, since they are assumed to reference
  * memory owned externally (source buffer or AST strings).
+ * Frees symbol names (because we allocate them in define()).
  *
  * @param table Pointer to the SymbolTable to free.
  */
@@ -63,7 +63,11 @@ void symbol_table_free(SymbolTable* table) {
         free((void*)table->symbols[i].name);
     }
     free(table->symbols);
+
+    table->symbols = NULL;
     table->count = 0;
+    table->capacity = 0;
+    table->current_depth = 0;
 }
 
 /**
@@ -92,7 +96,8 @@ void symbol_table_exit_scope(SymbolTable* table) {
         free((void*)table->symbols[table->count].name); // Free the name
     }
 
-    table->current_depth--;
+    if (table->current_depth > 0)
+        table->current_depth--;
 }
 
 /**
@@ -108,14 +113,12 @@ void symbol_table_exit_scope(SymbolTable* table) {
  * @return int 1 if definition succeeded, 0 if already defined in this scope.
  */
 int symbol_table_define(SymbolTable* table, const char* name, int len, DataType type) {
-
     // Check for redefinition within this scope only
     for (int i = table->count - 1; i >= 0; i--) {
         Symbol* s = &table->symbols[i];
 
         // Stop once we hit an outer scope
-        if (s->depth < table->current_depth)
-            break;
+        if (s->depth < table->current_depth) break;
 
         if (s->depth == table->current_depth &&
             s->name_len == len &&
