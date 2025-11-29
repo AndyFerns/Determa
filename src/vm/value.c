@@ -12,19 +12,25 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "vm/value.h"
 #include "vm/chunk.h"
 
 void print_value(Value value) {
     switch (value.type) {
-        case VAL_BOOL:
+        case VAL_BOOL:{
             printf(AS_BOOL(value) ? "true" : "false");
             break;
-        case VAL_INT:
+        }
+        case VAL_INT:{
             printf("%d", AS_INT(value));
             break;
-        // case VAL_OBJ: TODO
+        }
+        case VAL_OBJ: {
+            print_object(value);
+            break;
+        }
     }
 }
 
@@ -33,6 +39,11 @@ bool values_equal(Value a, Value b) {
     switch (a.type) {
         case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
         case VAL_INT:  return AS_INT(a) == AS_INT(b);
+        case VAL_OBJ: {
+            // For now, simple pointer equality. 
+            // Later implement deep equality for strings.
+            return AS_OBJ(a) == AS_OBJ(b);
+        }
         // case VAL_OBJ:
         default:       return false; // Should be unreachable
     }
