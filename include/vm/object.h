@@ -13,6 +13,7 @@
 #define OBJECT_H
 
 #include "common.h"
+#include "vm/value.h"
 
 // Forward declarations to avoid circular dependencies
 typedef struct Obj Obj;
@@ -47,5 +48,36 @@ struct ObjString {
     int length;
     char* chars;  // Null-terminated C string
 };
+
+// --- Macros for casting ---
+#define OBJ_TYPE(value)   (AS_OBJ(value)->type)
+#define IS_STRING(value)  (isObjType(value, OBJ_STRING))
+#define AS_STRING(value)  ((ObjString*)AS_OBJ(value))
+#define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
+
+// --- Functions ---
+
+/**
+ * @brief Creates a new string object by copying the given C-string.
+ */
+ObjString* copy_string(const char* chars, int length);
+
+/**
+ * @brief Takes ownership of a string constant (for future optimization).
+ */
+ObjString* take_string(char* chars, int length);
+
+/**
+ * @brief Helper for macros to check object type safely.
+ */
+static inline bool isObjType(Value value, ObjType type) {
+    return IS_OBJ(value) && AS_OBJ(value)->type == type;
+}
+
+/**
+ * @brief Prints an object to stdout.
+ */
+void print_object(Value value);
+
 
 #endif
