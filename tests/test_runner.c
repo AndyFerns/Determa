@@ -12,6 +12,8 @@
 #include "test_parser.h"
 #include "test_typechecker.h"
 #include "test_vm.h"
+#include "typechecker.h" // For init
+#include "vm/compiler.h" // For init
 
 int main(int argc, char* argv[]) {
     // Suppress unused warnings
@@ -37,12 +39,17 @@ int main(int argc, char* argv[]) {
     run_test(test_parser_print_statement, "Parser - Print Statement");
     run_test(test_parser_program, "Parser - Full Program");
 
+
+    // Reset before TC tests to ensure clean state
+    init_typechecker(); 
     // Phase 3 (Typechecker) Test Suite
+    printf("\n");
     run_test(test_tc_var_decl_and_access, "TypeChecker - Valid Var Decl & Access");
     run_test(test_tc_undefined_var, "TypeChecker - Undefined Variable Error");
     run_test(test_tc_redeclaration, "TypeChecker - Redeclaration Error");
 
     // Phase 4 Tests (VM)
+    printf("\n");
     test_vm_suite();
 
     // --- Add more tests here as we build new modules ---
