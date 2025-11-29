@@ -82,6 +82,18 @@ Value peek(int distance) {
     return vm.stackTop[-1 - distance];
 }
 
+// --- Runtime Error Helper ---
+
+/**
+ * @brief Prints out the error message to the terminal during function runtime
+ * 
+ * @param format 
+ */
+static void runtimeError(const char* format) {
+    fprintf(stderr, "%s\n", format);
+    reset_stack();
+}
+
 
 // -----------------------------------------------------------------------------
 // Core Execution Loop
