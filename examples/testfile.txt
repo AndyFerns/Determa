@@ -1,0 +1,9 @@
+// This is a Determa script file!
+var length = 50;
+var width = 20;
+var area = length * width;
+
+print area; // Should be 1000
+
+var discount = -100;
+print area + discount; // Should be 900
