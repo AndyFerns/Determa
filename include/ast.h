@@ -24,6 +24,7 @@
 typedef enum {
     NODE_PROGRAM,      // Root Node, holds a list of statements 
     NODE_INT_LITERAL,  // A simple integer
+    NODE_UNARY_OP,     // An operation like -5
     NODE_BINARY_OP,    // An operation like 1 + 2
     NODE_VAR_DECL,     // var x = 10;
     NODE_VAR_ASSIGN,   // x = 20;
@@ -68,6 +69,13 @@ typedef struct {
     AstNode node; // Base "class"
     int value;
 } AstNodeIntLiteral;
+
+
+typedef struct {
+    AstNode node;       // Base class
+    Token op;           // operation to be performed ('-')
+    AstNode* operand;   // operand on which to perform the op
+} AstNodeUnaryOp;
 
 /**
  * @struct AstNodeBinaryOp
@@ -174,6 +182,12 @@ AstNode* new_int_literal_node(int value, int line);
  * @brief Creates a new Binary Operator AST node
  */
 AstNode* new_binary_op_node(Token op, AstNode* left, AstNode* right, int line);
+
+
+/**
+ * @brief Creates a new Unary Operator AST node
+ */
+AstNode* new_unary_op_node(Token op, AstNode* operand, int line);
 
 /**
  * @brief Creates a new Variable Assignment AST node
