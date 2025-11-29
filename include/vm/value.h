@@ -1,6 +1,7 @@
 /**
  * @file value.h
  * @brief Defines how data is represented at runtime in the VM.
+ * Implements a Tagged Union to support Ints, Bools, and Objects.
  */
 
 #ifndef VM_VALUE_H
@@ -8,11 +9,40 @@
 
 #include "common.h"
 
+
 /**
- * @brief The core data type for the VM.
- * Currently just an integer, but will become a tagged union in Phase 5.
+ * @enum Value Type It stores the total types of values identifiable by the language
+ * @brief Identifies the type of data stored in a Value struct.
+ * 
  */
-typedef int Value;
+typedef enum {
+    VAL_BOOL,
+    VAL_INT
+    // VAL_OBJ, TODO
+} ValueType;
+
+
+typedef struct {
+    ValueType type;
+    union {
+        bool boolean;
+        int integer;
+        // Obj* Obj // TODO
+    } as;
+} Value;
+
+// --- Macros for Type Checking ---
+#define IS_BOOL(value)    ((value).type == VAL_BOOL)
+#define IS_INT(value)     ((value).type == VAL_INT)
+
+// --- Macros for Unwrapping Values (Unsafe - Check type first!) ---
+#define AS_BOOL(value)    ((value).as.boolean)
+#define AS_INT(value)     ((value).as.integer)
+
+// --- Macros for Creating Values ---
+#define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
+#define INT_VAL(value)    ((Value){VAL_INT, {.integer = value}})
+
 
 /**
  * @struct ValueArray
@@ -29,5 +59,10 @@ void init_value_array(ValueArray* array);
 void write_value_array(ValueArray* array, Value value);
 void free_value_array(ValueArray* array);
 void print_value(Value value);
+
+/**
+ * @brief Checks if two values are equal.
+ */
+bool values_equal(Value a, Value b);
 
 #endif // VM_VALUE_H
