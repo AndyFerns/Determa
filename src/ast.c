@@ -36,11 +36,20 @@ static void print_ast_recursive(AstNode* node, int indent) {
             }
             break;
         }
+
         case NODE_INT_LITERAL: {
             AstNodeIntLiteral* n = (AstNodeIntLiteral*)node;
             printf("INT_LITERAL: %d\n", n->value);
             break;
         }
+
+        case NODE_UNARY_OP: {
+            AstNodeUnaryOp* n = (AstNodeUnaryOp*)node;
+            printf("UNARY_OP: %s\n", token_type_to_string(n->op.type));
+            print_ast_recursive(n->operand, indent + 2);
+            break;
+        }
+
         case NODE_BINARY_OP: {
             AstNodeBinaryOp* n = (AstNodeBinaryOp*)node;
             printf("BINARY_OP: %s\n", token_type_to_string(n->op.type));
@@ -48,30 +57,34 @@ static void print_ast_recursive(AstNode* node, int indent) {
             print_ast_recursive(n->right, indent + 2);
             break;
         }
+
         case NODE_VAR_DECL: {
             AstNodeVarDecl* n = (AstNodeVarDecl*)node;
             printf("VAR_DECL: %.*s\n", n->name.length, n->name.lexeme);
             print_ast_recursive(n->init, indent + 2);
             break;
         }
+
         case NODE_VAR_ACCESS: {
             AstNodeVarAccess* n = (AstNodeVarAccess*)node;
             printf("VAR_ACCESS: %.*s\n", n->name.length, n->name.lexeme);
             break;
         }
+
         case NODE_PRINT_STMT: {
             AstNodePrintStmt* n = (AstNodePrintStmt*)node;
             printf("PRINT_STMT\n");
             print_ast_recursive(n->expression, indent + 2);
             break;
         }
+        
         case NODE_EXPR_STMT: { 
             AstNodeExprStmt* n = (AstNodeExprStmt*)node;
             printf("EXPR_STMT\n");
             print_ast_recursive(n->expression, indent + 2);
             break;
         }
-        // We will add more cases here
+        // add more cases as the AST node implementation grows
         default:
             printf("UNKNOWN_NODE\n");
             break;
@@ -342,6 +355,18 @@ AstNode* new_expr_stmt_node(AstNode* expression, int line) {
     return (AstNode*)node;
 }
 
+/**
+ * @brief Creates a new unary operator AST node
+ */
+AstNode* new_unary_op_node(Token op, AstNode* operand, int line) {
+    AstNodeUnaryOp* node = (AstNodeUnaryOp*)malloc(sizeof(AstNodeUnaryOp));
+    if (!node) return NULL;
+    node->node.type = NODE_UNARY_OP;
+    node->node.line = line;
+    node->op = op;
+    node->operand = operand;
+    return (AstNode*)node;
+}
 
 /**
  * @brief Creates a new Binary Operator AST node
