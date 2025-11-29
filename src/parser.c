@@ -41,6 +41,7 @@ typedef struct {
 static AstNode* parse_expression(Parser* parser);
 static AstNode* parse_term(Parser* parser);
 static AstNode* parse_factor(Parser* parser);
+static AstNode* parse_unary(Parser* parser);
 static AstNode* parse_primary(Parser* parser);
 static AstNode* parse_declaration(Parser* parser);
 static AstNode* parse_statement(Parser* parser);
@@ -168,6 +169,26 @@ static AstNode* parse_primary(Parser* parser) {
 }
 
 /**
+ * @brief Parses unary expressions (-int, -x)
+ * Rule: unary -> ("-") unary | primary
+ */
+static AstNode* parse_unary(Parser* parser) {
+    TRACE_ENTER("Unary");
+    if (match(parser, (TokenType[]){TOKEN_MINUS}, 1)) {
+        Token operator = parser->previous;
+        // Recursively call unary to handle --number
+        AstNode* operand = parse_unary(parser);
+        TRACE_EXIT("Unary (Op)");
+        return new_unary_op_node(operator, operand, operator.line);
+    }
+    
+    // If no unary op, fall through to primary
+    AstNode* res = parse_primary(parser);
+    TRACE_EXIT("Unary (Primary)");
+    return res;
+}
+
+/**
  * @brief Parses "factor" expressions (multiplication, division)
  *
  * Grammar Rule:
@@ -175,12 +196,13 @@ static AstNode* parse_primary(Parser* parser) {
  */
 static AstNode* parse_factor(Parser* parser) {
     TRACE_ENTER("Factor");
-    AstNode* node = parse_primary(parser);
+    // calling parse_unary with a fallback to parse_primary
+    AstNode* node = parse_unary(parser);
 
     TokenType op_types[] = {TOKEN_STAR, TOKEN_SLASH};
     while (match(parser, op_types, 2)) {
         Token op = parser->previous;
-        AstNode* right = parse_primary(parser);
+        AstNode* right = parse_unary(parser); // right side also unary
         node = new_binary_op_node(op, node, right, op.line);
     }
     
@@ -269,7 +291,7 @@ static AstNode* parse_print_statement(Parser* parser) {
  */
 static AstNode* parse_var_declaration(Parser* parser) {
     TRACE_ENTER("VarDecl");
-
+    // 'var' token was previous
     int line = parser->previous.line;
 
     consume(parser, TOKEN_ID, "Expected variable name");
