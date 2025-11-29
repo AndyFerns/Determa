@@ -2,7 +2,7 @@
  * @file main.c
  * @author Andrew Fernandes
  * @brief Main entry point for the Determa compiler
- * @version v0.1 'Balsa' Dev Build
+ * @version v0.2 'Cedar' Dev Build
  * @date 2025-11-18
  * 
  * @copyright Copyright (c) 2025
@@ -117,7 +117,7 @@ static void runFile(const char* path) {
  * @brief Starts the Interactive REPL (Read-Eval-Print Loop).
  */
 static void repl() {
-    printf("Determa v0.1 'Balsa' REPL\n");
+    printf("Determa v0.2 'Cedar' REPL\n");
     printf("Type 'exit' to quit.\n");
 
     // Initialize Persistent Systems (Variables stay alive)
@@ -156,7 +156,7 @@ int main(int argc, char* argv[]) {
         argc--;
     }
 
-    printf("Determa Compiler [v0.1 'Balsa' Dev Build]\n");
+    printf("Determa Compiler [v0.2 'Cedar' Dev Build]\n");
     // printf("Parsing source: \"%s\"\n\n", source_string);
 
     // no arguments, defaults to REPL mode
