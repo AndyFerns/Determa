@@ -24,16 +24,26 @@ typedef struct {
     int index;
 } CompilerSymbol;
 
+// Simple linear symbol table for globals
+static CompilerSymbol globalSymbols[256];
+static int globalCount;
+
 // State for the compiler
 typedef struct {
     Chunk* chunk;
     int hadError;
-
-    // Simple linear symbol table for globals
-    // In a full compiler, this would be a hash map.
-    CompilerSymbol globals[256];
-    int globalCount;
 } Compiler;
+
+
+/**
+ * @brief Function to assign global count as 0. Used while initializing the compiler
+ * 
+ * @return void
+ */
+void init_compiler() {
+    globalCount = 0;
+}
+
 
 // --- Helper Functions ---
 
@@ -71,12 +81,13 @@ static void emit_binary_op(Compiler* compiler, TokenType opType, int line) {
 }
 
 static int resolve_global(Compiler* compiler, Token name) {
-    for (int i = 0; i < compiler->globalCount; i++) {
-        Token* existing = &compiler->globals[i].name;
+    (void)compiler;
+    for (int i = 0; i < globalCount; i++) {
+        Token* existing = &globalSymbols[i].name;
         // String comparison
         if (existing->length == name.length && 
             strncmp(existing->lexeme, name.lexeme, name.length) == 0) {
-            return compiler->globals[i].index;
+            return globalSymbols[i].index;
         }
     }
     return -1;
@@ -84,15 +95,15 @@ static int resolve_global(Compiler* compiler, Token name) {
 
 // Creates a new global variable mapping
 static int define_global(Compiler* compiler, Token name) {
-    if (compiler->globalCount >= 256) {
+    if (globalCount >= 256) {
         fprintf(stderr, "Too many global variables.\n");
         compiler->hadError = 1;
         return 0;
     }
-    int index = compiler->globalCount;
-    compiler->globals[index].name = name;
-    compiler->globals[index].index = index;
-    compiler->globalCount++;
+    int index = globalCount;
+    globalSymbols[index].name = name;
+    globalSymbols[index].index = index;
+    globalCount++;
     return index;
 }
 
@@ -219,7 +230,8 @@ int compile_ast(struct AstNode* ast, Chunk* chunk) {
     Compiler compiler;
     compiler.chunk = chunk;
     compiler.hadError = 0;
-    compiler.globalCount = 0;   // start fresh for every compile
+    // no need to reset global Count anymore as it persists
+    // compiler.globalCount = 0;   // start fresh for every compile
 
     if (ast->type != NODE_PROGRAM) {
         fprintf(stderr, "Compiler Error: AST root must be PROGRAM\n");
