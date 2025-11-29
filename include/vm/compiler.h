@@ -18,6 +18,13 @@
 // Forward declaration
 struct AstNode;
 
+
+/**
+ * @brief Initializes/Resets the persistent state of the compiler (symbol table).
+ * @return voic (its just an initializer)
+ */
+void init_compiler();
+
 /**
  * @brief Compiles an AST into a bytecode Chunk.
  * @param ast The root of the AST.
