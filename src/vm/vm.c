@@ -82,6 +82,7 @@ Value peek(int distance) {
     return vm.stackTop[-1 - distance];
 }
 
+
 // -----------------------------------------------------------------------------
 // Core Execution Loop
 // -----------------------------------------------------------------------------
@@ -113,12 +114,19 @@ static InterpretResult run() {
 
     // Optimized binary operation macro
     // Note: using const Value ensures no aliasing surprises & better optimization
-    #define BINARY_OP(op)                          \
-        do {                                       \
-            const Value b = *(--stackTop);         /* pop b */ \
-            const Value a = *(--stackTop);         /* pop a */ \
-            *stackTop++ = (a op b);                /* push (a op b) */ \
-        } while (false)
+    #define BINARY_OP(op) \
+        do { \
+            if (!IS_INT(stackTop[-1]) || !IS_INT(stackTop[-2])) { \
+                vm.ip = ip; \
+                vm.stackTop = stackTop; \
+                runtimeError("Operands must be numbers."); \
+                return INTERPRET_RUNTIME_ERROR; \
+            } \
+            int b = AS_INT(*(--stackTop)); \
+            int a = AS_INT(*(--stackTop)); \
+            *stackTop++ = INT_VAL(a op b); \
+        } while (0)
+
 
     for (;;) {
 
@@ -131,9 +139,7 @@ static InterpretResult run() {
         }
         printf("\n");
 
-        printf("IP %04ld: Opcode %d\n",
-               (long)(ip - vm.chunk->code),
-               *ip);
+        printf("IP %04ld: Opcode %d\n", (long)(ip - vm.chunk->code), *ip);
 #endif
 
         uint8_t instruction = READ_BYTE();
@@ -168,11 +174,34 @@ static InterpretResult run() {
             case OP_ADD:      BINARY_OP(+); break;
             case OP_SUBTRACT: BINARY_OP(-); break;
             case OP_MULTIPLY: BINARY_OP(*); break;
-            case OP_DIVIDE:   BINARY_OP(/); break;
+            
+            case OP_DIVIDE: {
+                if (!IS_INT(stackTop[-1]) || !IS_INT(stackTop[-2])) {
+                    vm.ip = ip; vm.stackTop = stackTop;
+                    runtimeError("Operands must be numbers.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                int b = AS_INT(stackTop[-1]); // Peek
+                if (b == 0) {
+                    vm.ip = ip; vm.stackTop = stackTop;
+                    runtimeError("Division by zero.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                // Now safe to pop and divide
+                b = AS_INT(*(--stackTop));
+                int a = AS_INT(*(--stackTop));
+                *stackTop++ = INT_VAL(a / b);
+                break;
+            }
 
             case OP_NEGATE: {
-                // Optimized negate (modify top-of-stack in place)
-                stackTop[-1] = -stackTop[-1];
+                if (!IS_INT(stackTop[-1])) {
+                    vm.ip = ip; vm.stackTop = stackTop;
+                    runtimeError("Operand must be a number.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                // Unwrap, Negate, Wrap back
+                stackTop[-1] = INT_VAL(-AS_INT(stackTop[-1]));
                 break;
             }
 
@@ -207,5 +236,6 @@ static InterpretResult run() {
 InterpretResult interpret(Chunk* chunk) {
     vm.chunk = chunk;
     vm.ip = vm.chunk->code;
+    reset_stack(); 
     return run();
 }
