@@ -5,11 +5,13 @@
 
 #include "test_vm.h"
 #include "test.h"
+
 #include "vm/chunk.h"
 #include "vm/vm.h"
 #include "vm/opcode.h"
+#include "vm/value.h"   // needed for macroes
 
-// Note: Test functions are now static to avoid linker errors when building the test runner.
+// Test functions are now static to avoid linker errors when building the test runner.
 
 static void test_vm_initialization() {
     // Test 1: Create and initialize a chunk
@@ -21,9 +23,9 @@ static void test_vm_initialization() {
     CHECK(chunk.code == NULL, "Chunk code should be NULL initially");
 
     // Test 2: Add a constant
-    int constantIndex = add_constant(&chunk, 123);
+    int constantIndex = add_constant(&chunk, INT_VAL(123));
     CHECK(constantIndex == 0, "First constant index should be 0");
-    CHECK(chunk.constants.values[0] == 123, "Constant value should be 123");
+    CHECK(AS_INT(chunk.constants.values[0]) == 123, "Constant value should be 123");
     CHECK(chunk.constants.count == 1, "Constant pool count should be 1");
 
     // Test 3: Write an instruction
@@ -46,12 +48,12 @@ static void test_vm_arithmetic() {
     init_vm();
 
     // 1. Push Constant 1
-    int c1 = add_constant(&chunk, 1);
+    int c1 = add_constant(&chunk, INT_VAL(1));
     write_chunk(&chunk, OP_CONSTANT, 1);
     write_chunk(&chunk, (uint8_t)c1, 1); // Cast constant index to uint8_t
 
     // 2. Push Constant 2
-    int c2 = add_constant(&chunk, 2);
+    int c2 = add_constant(&chunk, INT_VAL(2));
     write_chunk(&chunk, OP_CONSTANT, 1);
     write_chunk(&chunk, (uint8_t)c2, 1); // Cast constant index to uint8_t
 
@@ -67,7 +69,8 @@ static void test_vm_arithmetic() {
     // Check Result
     // Stack should have 1 item: result 3
     Value result = peek(0);
-    CHECK(result == 3, "1 + 2 should equal 3");
+    CHECK(IS_INT(result), "Result is INT");
+    CHECK(AS_INT(result) == 3, "1 + 2 = 3");
 
     free_chunk(&chunk);
     free_vm();
@@ -81,7 +84,7 @@ static void test_vm_precedence_manual() {
     init_vm();
 
     // Push 5
-    int c1 = add_constant(&chunk, 5);
+    int c1 = add_constant(&chunk, INT_VAL(5));
     write_chunk(&chunk, OP_CONSTANT, 1);
     write_chunk(&chunk, (uint8_t)c1, 1);
 
@@ -89,7 +92,7 @@ static void test_vm_precedence_manual() {
     write_chunk(&chunk, OP_NEGATE, 1);
 
     // Push 10
-    int c2 = add_constant(&chunk, 10);
+    int c2 = add_constant(&chunk, INT_VAL(10));
     write_chunk(&chunk, OP_CONSTANT, 1);
     write_chunk(&chunk, (uint8_t)c2, 1);
 
@@ -100,7 +103,7 @@ static void test_vm_precedence_manual() {
     interpret(&chunk);
 
     Value result = peek(0);
-    CHECK(result == 5, "-5 + 10 should equal 5");
+    CHECK(AS_INT(result) == 5, "-5 + 10 should equal 5");
 
     free_chunk(&chunk);
     free_vm();
