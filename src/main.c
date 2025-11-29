@@ -92,6 +92,12 @@ static char* readFile(const char* path) {
  * @brief Runs a script file.
  */
 static void runFile(const char* path) {
+    // --- Check file extension ---
+    const char* ext = strrchr(path, '.');
+    if (!ext || strcmp(ext, ".det") != 0) {
+        fprintf(stderr, "Warning: File '%s' does not have a .det extension.\n", path);
+        // We warn but proceed, or exit(64) if you want to be strict
+    }
     char* source = readFile(path);
     
     // Initialize Persistent Systems
@@ -142,12 +148,7 @@ static void repl() {
 
 
 int main(int argc, char* argv[]) {
-    const char* source_string = 
-        "var x = 10;\n"
-        "var y = 20;\n"
-        "print x + y * 2;"; //Default test string
-
-    if (argc > 1, strcmp(argv[1], "--pda-debug") == 0) {
+    if (argc > 1 && strcmp(argv[1], "--pda-debug") == 0) {
         pda_debug_mode = 1;
         printf("--- PDA DEBUG MODE ENABLED ---\n");
         // Shift args so we can handle files correctly
@@ -156,7 +157,7 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Determa Compiler [v0.1 'Balsa' Dev Build]\n");
-    printf("Parsing source: \"%s\"\n\n", source_string);
+    // printf("Parsing source: \"%s\"\n\n", source_string);
 
     // no arguments, defaults to REPL mode
     if (argc == 1) {
