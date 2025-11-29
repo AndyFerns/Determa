@@ -9,6 +9,8 @@
 #define VM_VM_H
 
 #include "chunk.h"
+#include "value.h" // Value needs to be fully defined
+#include "object.h" // VM needs to know about Objects
 
 #define STACK_MAX 256
 // Maximum number of global variables allowed in a script
@@ -24,6 +26,7 @@ typedef struct {
     Value stack[STACK_MAX];     // The operand stack
     Value* stackTop;            // Points to the top of the stack
     Value globals[GLOBALS_MAX]; // Compiler resolves names ("x") to indices (0) and stores it here
+    Obj* objects;               // Object Tracking: stores the Head of the linked list of all allocated objects
 } VM;
 
 /**
