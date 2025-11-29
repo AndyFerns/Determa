@@ -19,6 +19,10 @@
 
 #include <stdio.h>
 
+// --- Persistent State ---
+static SymbolTable globalSymbols;
+static int is_initialized = 0;
+
 /**
  * @struct TypeChecker
  * @brief Internal state for the recursive type-checking pass.
@@ -33,6 +37,23 @@ typedef struct {
     SymbolTable symbols;
     int had_error;
 } TypeChecker;
+
+
+void init_typechecker() {
+    if (!is_initialized) {
+        symbol_table_init(&globalSymbols);
+    }
+    
+    is_initialized = 1;
+}
+
+void free_typechecker() {
+    if (is_initialized) {
+        symbol_table_free(&globalSymbols);
+        is_initialized = 0;
+    }
+}
+
 
 /**
  * @brief Report a type error and mark the checker as invalid.
@@ -72,8 +93,9 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
 
         case NODE_VAR_ACCESS: {
             AstNodeVarAccess* access = (AstNodeVarAccess*)expr;
+            // Use the persistent globalSymbols table
             DataType type = symbol_table_lookup(
-                &tc->symbols,
+                &globalSymbols,
                 access->name.lexeme,
                 access->name.length
             );
@@ -148,7 +170,7 @@ static void check_statement(TypeChecker* tc, AstNode* stmt) {
 
             // Add to symbol table
             if (!symbol_table_define(
-                    &tc->symbols,
+                    &globalSymbols,
                     decl->name.lexeme,
                     decl->name.length,
                     initType
@@ -208,10 +230,18 @@ static void check_statement(TypeChecker* tc, AstNode* stmt) {
  * @return int 1 if type checking passed, 0 if any error occurred.
  */
 int typecheck_ast(AstNode* root) {
+    if (!is_initialized) init_typechecker(); // Lazy init safety
+
     TypeChecker tc;
     tc.had_error = 0;
 
-    symbol_table_init(&tc.symbols);
+    // Copy global → local
+    tc.symbols = globalSymbols;
+
+    // Local scope (for this AST run)
+    symbol_table_enter_scope(&tc.symbols);
+
+    // symbol_table_init(&globalSymbols);
 
     // A program node represents a list of statements
     if (root->type == NODE_PROGRAM) {
@@ -223,6 +253,13 @@ int typecheck_ast(AstNode* root) {
         check_statement(&tc, root);
     }
 
-    symbol_table_free(&tc.symbols);
+    // Pop temporary scope
+    symbol_table_exit_scope(&tc.symbols);
+
+    // If no error, commit back to persistent global table
+    if (!tc.had_error)
+        globalSymbols = tc.symbols;
+
+    // symbol_table_free(&globalSymbols);
     return !tc.had_error;
 }
