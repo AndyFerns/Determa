@@ -39,3 +39,36 @@ static Obj* allocate_object(size_t size, ObjType type) {
 
     return object;
 }
+
+/**
+ * @brief Function to allocate memory from the heap for string characters
+ * 
+ * @param chars 
+ * @param length 
+ * @return ObjString* 
+ */
+static ObjString* allocate_string(char* chars, int length) {
+    ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+    string->length = length;
+    string->chars = chars;
+    return string;
+}
+
+ObjString* copy_string(const char* chars, int length) {
+    char* heapChars = (char*)malloc(length + 1);
+    memcpy(heapChars, chars, length);
+    heapChars[length] = '\0';
+    return allocate_string(heapChars, length);
+}
+
+ObjString* take_string(char* chars, int length) {
+    return allocate_string(chars, length);
+}
+
+void print_object(Value value) {
+    switch (OBJ_TYPE(value)) {
+        case OBJ_STRING:
+            printf("%s", AS_CSTRING(value));
+            break;
+    }
+}
