@@ -91,6 +91,16 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
         case NODE_INT_LITERAL:
             return TYPE_INT;
 
+        case NODE_UNARY_OP: {
+            AstNodeUnaryOp* n = (AstNodeUnaryOp*)expr;
+            DataType type = check_expression(tc, n->operand);
+            if (type != TYPE_INT) {
+                error(tc, "Unary '-' only applies to numbers.");
+                return TYPE_ERROR;
+            }
+            return TYPE_INT;
+        }
+
         case NODE_VAR_ACCESS: {
             AstNodeVarAccess* access = (AstNodeVarAccess*)expr;
             // Use the persistent globalSymbols table
