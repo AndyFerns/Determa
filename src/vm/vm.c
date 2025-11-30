@@ -16,6 +16,7 @@
 #include "vm/common.h"
 #include "vm/value.h"
 #include "vm/object.h" // Need this to access ObjString struct for freeing
+#include "vm/memory.h"
 
 // The global VM instance (single VM model)
 VM vm;
@@ -33,32 +34,41 @@ static void reset_stack() {
 void init_vm() {
     reset_stack();
     vm.objects = NULL; // Initialize the tracker list
+
+    // --- NEW: GC Init ---
+    vm.grayCount = 0;
+    vm.grayCapacity = 0;
+    vm.grayStack = NULL;
+    vm.bytesAllocated = 0;
+    vm.nextGC = 1024 * 1024; // Start GC at 1MB
 }
 
 // --- Helper to free a single object ---
-static void free_object(Obj* object) {
-    switch (object->type) {
-        case OBJ_STRING: {
-            ObjString* string = (ObjString*)object;
-            free(string->chars); // Free the character array
-            free(string);        // Free the struct itself
-            break;
-        }
-    }
-}
+// static void free_object(Obj* object) {
+//     switch (object->type) {
+//         case OBJ_STRING: {
+//             ObjString* string = (ObjString*)object;
+//             free(string->chars); // Free the character array
+//             free(string);        // Free the struct itself
+//             break;
+//         }
+//     }
+// }
 
 /**
  * @brief Free VM resources for heap-managed resources
  */
 void free_vm() {
-    // Walk the linked list and free every object
     Obj* object = vm.objects;
     while (object != NULL) {
         Obj* next = object->next;
-        free_object(object);
+        free_object(object); // Calls memory.c's free_object
         object = next;
     }
     vm.objects = NULL;
+
+    // Free the gray stack
+    free(vm.grayStack);
 }
 
 // -----------------------------------------------------------------------------
@@ -218,7 +228,11 @@ static InterpretResult run() {
                     stackTop -= 2; 
 
                     int length = a->length + b->length;
-                    char* chars = (char*)malloc(length + 1);
+
+                    // FIX: Use reallocate (via explicit call since macro isn't here)
+                    // need to cast to ensure the prototype matches
+                    char* chars = (char*)reallocate(NULL, 0, length + 1);
+
                     memcpy(chars, a->chars, a->length);
                     memcpy(chars + a->length, b->chars, b->length);
                     chars[length] = '\0';

@@ -16,26 +16,33 @@
 #include "vm/object.h"
 #include "vm/value.h"
 #include "vm/vm.h"
+#include "vm/memory.h" 
+
+
+// Macro to allocate memory using the GC tracker
+#define ALLOCATE(type, count) \
+    (type*)reallocate(NULL, 0, sizeof(type) * (count))
+
 
 // Helper to allocate memory for an object
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocate_object(sizeof(type), objectType)
 
+
+
 static Obj* allocate_object(size_t size, ObjType type) {
-    // 1. Allocate the raw memory
-    Obj* object = (Obj*)malloc(size);
-    if (object == NULL) {
-        fprintf(stderr, "Fatal: Out of memory.\n");
-        exit(1);
-    }
-
-    // 2. Initialize base state
+    // Use the GC-aware reallocate to get memory
+    Obj* object = (Obj*)reallocate(NULL, 0, size);
+    
     object->type = type;
+    object->isMarked = false; // --- NEW: Initialize mark
 
-    // 3. Add to the VM's tracking list (The "Tracker List" solution)
-    // This inserts at the head of the list.
     object->next = vm.objects;
     vm.objects = object;
+
+    #ifdef DEBUG_LOG_GC
+    printf("%p allocate %zu for %d\n", (void*)object, size, type);
+    #endif
 
     return object;
 }
@@ -55,7 +62,8 @@ static ObjString* allocate_string(char* chars, int length) {
 }
 
 ObjString* copy_string(const char* chars, int length) {
-    char* heapChars = (char*)malloc(length + 1);
+    char* heapChars = ALLOCATE(char, length + 1);
+    
     memcpy(heapChars, chars, length);
     heapChars[length] = '\0';
     return allocate_string(heapChars, length);

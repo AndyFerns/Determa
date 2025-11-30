@@ -33,4 +33,10 @@ void init_compiler();
  */
 int compile_ast(struct AstNode* ast, Chunk* chunk);
 
+/**
+ * @brief Function to mark compiler roots and use it in garbage collection and garbage deletion
+ * 
+ */
+void mark_compiler_roots();
+
 #endif // VM_COMPILER_H

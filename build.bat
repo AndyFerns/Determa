@@ -32,7 +32,8 @@ SET BACKEND_SOURCES= ^
     src\vm\vm.c ^
     src\vm\compiler.c ^
     src\vm\value.c ^
-    src\vm\object.c
+    src\vm\object.c ^
+    src\vm\memory.c
 
 REM Combine Lib Sources
 SET LIB_SOURCES=%FRONTEND_SOURCES% %BACKEND_SOURCES%
@@ -50,6 +51,7 @@ SET TEST_SOURCES=^
     tests\parser\test_parser.c ^
     tests\typechecker\test_typechecker.c ^
     tests\vm\test_vm.c ^
+    tests\vm\test_gc.c^
     %LIB_SOURCES%
 
 REM --- Compilation Step ---

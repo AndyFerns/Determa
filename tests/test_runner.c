@@ -11,6 +11,7 @@
 #include "test_lexer.h"
 #include "test_parser.h"
 #include "test_typechecker.h"
+#include "test_gc.h"
 #include "test_vm.h"
 #include "typechecker.h" // For init
 #include "vm/compiler.h" // For init
@@ -51,6 +52,10 @@ int main(int argc, char* argv[]) {
     // Phase 4 Tests (VM)
     printf("\n");
     test_vm_suite();
+
+    // Phase 5 Tests (Garbage collector)
+    printf("\n");
+    test_gc_suite();
 
     // --- Add more tests here as we build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");

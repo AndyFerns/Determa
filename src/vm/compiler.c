@@ -18,6 +18,7 @@
 #include "vm/chunk.h"
 #include "vm/opcode.h"
 #include "vm/object.h" // Need object API
+#include "vm/memory.h" // Needed for mark_value
 #include "ast.h"
 #include "token.h"
 
@@ -40,31 +41,44 @@ typedef struct {
 } Compiler;
 
 
+
+
+// --- Active Compiler Tracking for GC ---
+// required so that the gc can find the constants inside the chunk currently being compiled
+static Compiler* current = NULL;
+
+
+/**
+ * @brief Function to mark all constants in the chunk currently being compiled
+ * Prevents the GC from deleting strings just created but not compiled yet
+ * 
+ * @return void
+ */
+void mark_compiler_roots() {
+    if (current == NULL) return;
+    
+    Chunk* chunk = current->chunk;
+    for (int i = 0; i < chunk->constants.count; i++) {
+        mark_value(chunk->constants.values[i]);
+    }
+}
+
+
+
+
+// ========================
+// --- Helper Functions ---
+// ========================
+
 /**
  * @brief Function to assign global count as 0. Used while initializing the compiler
  * 
  * @return void
  */
 void init_compiler(void) {
-    globalCount = 0;
+    // globalCount = 0;
 }
 
-/**
- * @brief Free Global symbols helper function
- * call on shutdown or before resetting the compiler
- */
-void free_global_symbols(void) {
-    for (int i = 0; i < globalCount; i++) {
-        free(globalSymbols[i].name);
-        globalSymbols[i].name = NULL;
-        globalSymbols[i].length = 0;
-        globalSymbols[i].index = -1;
-    }
-    globalCount = 0;
-}
-
-
-// --- Helper Functions ---
 
 /**
  * @brief Emits a single byte (OpCode) to the chunk.
@@ -312,12 +326,18 @@ int compile_ast(struct AstNode* ast, Chunk* chunk) {
     // no need to reset global Count anymore as it persists
     // compiler.globalCount = 0;   // start fresh for every compile
 
+    // set active compiler for gc
+    current = &compiler; 
+
     if (ast->type != NODE_PROGRAM) {
         fprintf(stderr, "Compiler Error: AST root must be PROGRAM\n");
         return 0;
     }
 
     compile_program(&compiler, ast);
+
+    // clear active compiler after completed compilation
+    current = NULL;
     
     if (compiler.hadError) {
         // If an error occurred, the chunk is incomplete/corrupt
@@ -325,4 +345,19 @@ int compile_ast(struct AstNode* ast, Chunk* chunk) {
         return 0;
     }
     return 1;
+}
+
+
+/**
+ * @brief Free Global symbols helper function
+ * call on shutdown or before resetting the compiler
+ */
+void free_global_symbols(void) {
+    for (int i = 0; i < globalCount; i++) {
+        free(globalSymbols[i].name);
+        globalSymbols[i].name = NULL;
+        globalSymbols[i].length = 0;
+        globalSymbols[i].index = -1;
+    }
+    globalCount = 0;
 }
