@@ -3,6 +3,8 @@
  * @brief Unit tests for the Virtual Machine backend.
  */
 
+#include <string.h>
+
 #include "test_vm.h"
 #include "test.h"
 
@@ -10,6 +12,7 @@
 #include "vm/vm.h"
 #include "vm/opcode.h"
 #include "vm/value.h"   // needed for macroes
+#include "vm/object.h" // --- NEW: Access to internal Object API
 
 // Test functions are now static to avoid linker errors when building the test runner.
 
@@ -109,9 +112,44 @@ static void test_vm_precedence_manual() {
     free_vm();
 }
 
+static void test_vm_manual_string_alloc() {
+    init_vm(); // Ensure VM state is clean (vm.objects = NULL)
+
+    // 1. Manually allocate a string using internal API
+    ObjString* str = copy_string("Hello", 5);
+
+    // 2. Verify Allocation and Type
+    CHECK(str != NULL, "String allocation returned non-NULL");
+    CHECK(str->length == 5, "String length is correct");
+    CHECK(strcmp(str->chars, "Hello") == 0, "String content is correct");
+    CHECK(str->obj.type == OBJ_STRING, "Object type is OBJ_STRING");
+
+    // 3. Verify VM Tracking (The "Tracker List")
+    // The new object should be at the head of the VM's object list
+    CHECK(vm.objects == (Obj*)str, "VM is tracking the new object");
+
+    // 4. Verify Value Wrapping
+    Value val = OBJ_VAL(str);
+    CHECK(IS_OBJ(val), "Value is tagged as Object");
+    CHECK(IS_STRING(val), "Value is tagged as String");
+    CHECK(AS_OBJ(val) == (Obj*)str, "Unwrapped object pointer matches");
+    CHECK(strcmp(AS_CSTRING(val), "Hello") == 0, "Unwrapped C-String matches");
+
+    // 5. Test Multiple Allocations (Linked List check)
+    ObjString* str2 = copy_string("World", 5);
+    CHECK(vm.objects == (Obj*)str2, "VM list head updated to newest object");
+    CHECK(vm.objects->next == (Obj*)str, "New object points to old object");
+
+    // 6. Clean up
+    free_vm(); // Should free both strings without crashing
+    CHECK(vm.objects == NULL, "VM object list cleared after free_vm");
+}
+
+
 // Global function to run tests (called by test_runner.c)
 void test_vm_suite() {
     run_test(test_vm_initialization, "VM - Chunk & Constant Pool Basics");
     run_test(test_vm_arithmetic, "VM - Arithmetic (1 + 2)");
     run_test(test_vm_precedence_manual, "VM - Manual Precedence (-5 + 10)");
+    run_test(test_vm_manual_string_alloc, "VM - Manual String Allocation & Tracking");
 }
