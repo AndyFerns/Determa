@@ -5,18 +5,21 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "vm/chunk.h"
 
-// --- Memory Management Helper ---
-// We handle reallocations manually here to avoid dependency on a complex memory manager yet.
-static void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
-    (void)oldSize; // Silence warning for unused parameter
-    if (newSize == 0) {
-        free(pointer);
-        return NULL;
-    }
-    return realloc(pointer, newSize);
-}
+#include "vm/chunk.h"
+#include "vm/memory.h"
+
+// moved to memory.h/c ->
+// // --- Memory Management Helper ---
+// // We handle reallocations manually here to avoid dependency on a complex memory manager yet.
+// static void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
+//     (void)oldSize; // Silence warning for unused parameter
+//     if (newSize == 0) {
+//         free(pointer);
+//         return NULL;
+//     }
+//     return realloc(pointer, newSize);
+// }
 
 #define GROW_CAPACITY(capacity) \
     ((capacity) < 8 ? 8 : (capacity) * 2)
