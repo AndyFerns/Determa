@@ -16,26 +16,25 @@
 #include "vm/object.h"
 #include "vm/value.h"
 #include "vm/vm.h"
+#include "vm/memory.h" 
 
 // Helper to allocate memory for an object
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocate_object(sizeof(type), objectType)
 
 static Obj* allocate_object(size_t size, ObjType type) {
-    // 1. Allocate the raw memory
-    Obj* object = (Obj*)malloc(size);
-    if (object == NULL) {
-        fprintf(stderr, "Fatal: Out of memory.\n");
-        exit(1);
-    }
-
-    // 2. Initialize base state
+    // Use the GC-aware reallocate to get memory
+    Obj* object = (Obj*)reallocate(NULL, 0, size);
+    
     object->type = type;
+    object->isMarked = false; // --- NEW: Initialize mark
 
-    // 3. Add to the VM's tracking list (The "Tracker List" solution)
-    // This inserts at the head of the list.
     object->next = vm.objects;
     vm.objects = object;
+
+    #ifdef DEBUG_LOG_GC
+    printf("%p allocate %zu for %d\n", (void*)object, size, type);
+    #endif
 
     return object;
 }
