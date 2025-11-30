@@ -17,6 +17,7 @@
 #include "vm/compiler.h"
 #include "vm/chunk.h"
 #include "vm/opcode.h"
+#include "vm/object.h" // Need object API
 #include "ast.h"
 #include "token.h"
 
@@ -172,6 +173,16 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
             AstNodeIntLiteral* n = (AstNodeIntLiteral*)expr;
             // Emit instruction to load the constant onto the stack
             emit_constant(compiler, INT_VAL(n->value), (n->node.line));
+            break;
+        }
+
+        // Compile string
+        case NODE_STRING_LITERAL: {
+            AstNodeStringLiteral* n = (AstNodeStringLiteral*)expr;
+            // Create a String Object on the heap
+            ObjString* stringObj = copy_string(n->value, (int)strlen(n->value));
+            // Wrap it in a Value and emit as a constant
+            emit_constant(compiler, OBJ_VAL(stringObj), n->node.line);
             break;
         }
 
