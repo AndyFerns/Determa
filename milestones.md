@@ -153,37 +153,37 @@ Status: 100% Complete
 Goal: Implement automatic memory management in the VM.
 Status: Not Started (Next Step).
 
-- [ ] Object System: In include/vm/object.h, define structs for heap-allocated objects (e.g., strings, lists).
+- [x] Object System: In include/vm/object.h, define structs for heap-allocated objects (e.g., strings, lists).
 
-- [ ] Define Obj base struct (type tag, next pointer).
+- [x] Define Obj base struct (type tag, next pointer).
 
-- [ ] Define ObjString struct.
+- [x] Define ObjString struct.
 
-- [ ] Memory Manager:
+- [x] Memory Manager:
 
-- [ ] In src/vm/memory.c, write functions for allocate_object() and free_object().
+- [x] In src/vm/memory.c, write functions for allocate_object() and free_object().
 
-- [ ] Implement the GC (Mark-and-Sweep):
+- [x] Implement the GC (Mark-and-Sweep):
 
-- [ ] Mark Phase: Start from the VM's stack and globals, and "mark" every object that is still reachable.
+- [x] Mark Phase: Start from the VM's stack and globals, and "mark" every object that is still reachable.
 
-- [ ] Sweep Phase: Go through all allocated objects. If an object is not marked, free() it.
+- [x] Sweep Phase: Go through all allocated objects. If an object is not marked, free() it.
 
-- [ ] Integrate GC with VM:
+- [x] Integrate GC with VM:
 
-- [ ] The VM must trigger the GC (run_gc()) whenever it's about to run out of memory or hit a threshold.
+- [x] The VM must trigger the GC (run_gc()) whenever it's about to run out of memory or hit a threshold.
 
 ### Syllabus Link: Module 6 (Undecidability)
 
-- [ ] Implement the Symbol Table:
+- [x] Implement the Symbol Table:
 
-- [ ] Create symbol_table.c.
+- [x] Create symbol_table.c.
 
-- [ ] This will be a simple Hash Map or Linked List that stores variable names and their values (e.g., {"x": 10}).
+- [x] This will be a simple Hash Map or Linked List that stores variable names and their values (e.g., {"x": 10}).
 
-- [ ] Implement the "Visitor" / Evaluator:
+- [x] Implement the "Visitor" / Evaluator:
 
-- [ ] Create evaluator.c.
+- [x] Create evaluator.c.
 
 - [ ] Write a recursive function
 
@@ -236,4 +236,4 @@ Goal: Convert Determa code into another, lower-level language instead of running
 
 - [ ] Write a Code Generator: Write a new recursive function generate_code(Node* node) that walks the AST and prints the IR instructions instead of evaluating them.
 
-- [ ] Write a Virtual Machine (VM): A separate C program that can read and execute your new IR. This VM is the target for your compiler.
+- [x] Write a Virtual Machine (VM): A separate C program that can read and execute your new IR. This VM is the target for your compiler.
