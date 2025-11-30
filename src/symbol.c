@@ -123,7 +123,13 @@ int symbol_table_define(SymbolTable* table, const char* name, int len, DataType 
         if (s->depth == table->current_depth &&
             s->name_len == len &&
             strncmp(s->name, name, len) == 0) {
-            return 0; // Redefinition
+
+            // Allow redefinition in Global Scope (Depth 0) for REPL convenience
+            if (table->current_depth == 0) {
+                s->type = type;
+                return 1; // Success (overwrite)
+            }
+            return 0; // Redefinition error in same scope
         }
     }
 
