@@ -16,6 +16,7 @@
 
 #include "vm/value.h"
 #include "vm/chunk.h"
+#include "vm/object.h"
 
 void print_value(Value value) {
     switch (value.type) {
