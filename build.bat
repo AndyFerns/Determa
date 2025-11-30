@@ -31,7 +31,8 @@ SET BACKEND_SOURCES= ^
     src\vm\chunk.c ^
     src\vm\vm.c ^
     src\vm\compiler.c ^
-    src\vm\value.c
+    src\vm\value.c ^
+    src\vm\object.c
 
 REM Combine Lib Sources
 SET LIB_SOURCES=%FRONTEND_SOURCES% %BACKEND_SOURCES%
