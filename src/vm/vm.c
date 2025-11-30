@@ -228,7 +228,11 @@ static InterpretResult run() {
                     stackTop -= 2; 
 
                     int length = a->length + b->length;
-                    char* chars = (char*)malloc(length + 1);
+
+                    // FIX: Use reallocate (via explicit call since macro isn't here)
+                    // need to cast to ensure the prototype matches
+                    char* chars = (char*)reallocate(NULL, 0, length + 1);
+
                     memcpy(chars, a->chars, a->length);
                     memcpy(chars + a->length, b->chars, b->length);
                     chars[length] = '\0';
