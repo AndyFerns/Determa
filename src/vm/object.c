@@ -18,9 +18,17 @@
 #include "vm/vm.h"
 #include "vm/memory.h" 
 
+
+// Macro to allocate memory using the GC tracker
+#define ALLOCATE(type, count) \
+    (type*)reallocate(NULL, 0, sizeof(type) * (count))
+
+
 // Helper to allocate memory for an object
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocate_object(sizeof(type), objectType)
+
+
 
 static Obj* allocate_object(size_t size, ObjType type) {
     // Use the GC-aware reallocate to get memory
@@ -54,7 +62,8 @@ static ObjString* allocate_string(char* chars, int length) {
 }
 
 ObjString* copy_string(const char* chars, int length) {
-    char* heapChars = (char*)malloc(length + 1);
+    char* heapChars = ALLOCATE(char, length + 1);
+    
     memcpy(heapChars, chars, length);
     heapChars[length] = '\0';
     return allocate_string(heapChars, length);
