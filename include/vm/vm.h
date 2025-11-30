@@ -27,6 +27,14 @@ typedef struct {
     Value* stackTop;            // Points to the top of the stack
     Value globals[GLOBALS_MAX]; // Compiler resolves names ("x") to indices (0) and stores it here
     Obj* objects;               // Object Tracking: stores the Head of the linked list of all allocated objects
+
+    // GC States
+    int grayCount;              // Number of objects in the worklist
+    int grayCapacity;           // Capacity of the worklist
+    Obj** grayStack;            // The worklist (stack of gray objects)
+    
+    size_t bytesAllocated;      // Total bytes currently allocated
+    size_t nextGC;              // Threshold to trigger the next collection
 } VM;
 
 /**
