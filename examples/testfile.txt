@@ -7,3 +7,7 @@ print area; // Should be 1000
 
 var discount = -100;
 print area + discount; // Should be 900
+
+var he = "hello";
+var wo = "world";
+print he + wo; // should be helloworld
