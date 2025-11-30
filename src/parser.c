@@ -145,6 +145,21 @@ static AstNode* parse_primary(Parser* parser) {
         return new_int_literal_node((int)val, parser->previous.line);
     }
 
+    // --- String Literal Parsing ---
+    if (check(parser, TOKEN_STRING)) {
+        // The token lexeme includes quotes: "hello"
+        // We want to strip them: hello
+        int len = parser->current.length - 2; // -2 for quotes
+        char* strVal = (char*)malloc(len + 1);
+        // Copy starting from lexeme + 1 to skip opening quote
+        memcpy(strVal, parser->current.lexeme + 1, len);
+        strVal[len] = '\0';
+        
+        advance(parser);
+        TRACE_EXIT("Primary (StringLiteral)");
+        return new_string_literal_node(strVal, parser->previous.line);
+    }
+
     // Handle identifier
     if (check(parser, TOKEN_ID)) {
         Token name = parser->current;

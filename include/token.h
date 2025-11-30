@@ -38,6 +38,7 @@ typedef enum {
     // Literals
     TOKEN_INT,        // 123
     TOKEN_ID,         // x, my_var
+    TOKEN_STRING,     // "hello", 'world'
 
     // Keywords
     TOKEN_VAR,        // var

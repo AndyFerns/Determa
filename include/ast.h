@@ -22,15 +22,16 @@
  * @brief An enumeration of all possible AST node types
  */
 typedef enum {
-    NODE_PROGRAM,      // Root Node, holds a list of statements 
-    NODE_INT_LITERAL,  // A simple integer
-    NODE_UNARY_OP,     // An operation like -5
-    NODE_BINARY_OP,    // An operation like 1 + 2
-    NODE_VAR_DECL,     // var x = 10;
-    NODE_VAR_ASSIGN,   // x = 20;
-    NODE_VAR_ACCESS,   // x;
-    NODE_PRINT_STMT,   // print 10;
-    NODE_EXPR_STMT     // 1 + 1; Expression as a statements
+    NODE_PROGRAM,           // Root Node, holds a list of statements 
+    NODE_INT_LITERAL,       // A simple integer
+    NODE_STRING_LITERAL,    // Represents a string literal
+    NODE_UNARY_OP,          // An operation like -5
+    NODE_BINARY_OP,         // An operation like 1 + 2
+    NODE_VAR_DECL,          // var x = 10;
+    NODE_VAR_ASSIGN,        // x = 20;
+    NODE_VAR_ACCESS,        // x;
+    NODE_PRINT_STMT,        // print 10;
+    NODE_EXPR_STMT          // 1 + 1; Expression as a statements
     // We will add more as we go (if, while, funcs)
 } AstNodeType;
 
@@ -69,6 +70,16 @@ typedef struct {
     AstNode node; // Base "class"
     int value;
 } AstNodeIntLiteral;
+
+
+/**
+ * @brief Represents a string literal (e.g., "hello")
+ * @struct AstNodeStringLiteral
+ */
+typedef struct {
+    AstNode node;
+    char* value;
+} AstNodeStringLiteral;
 
 
 typedef struct {
@@ -177,6 +188,12 @@ AstNode* new_expr_stmt_node(AstNode* expression, int line);
  * @brief Creates a new Integer Literal AST node
  */
 AstNode* new_int_literal_node(int value, int line);
+
+
+/**
+ * @brief Creates a new String literal AST node
+ */
+AstNode* new_string_literal_node(char* value, int line);
 
 /**
  * @brief Creates a new Binary Operator AST node

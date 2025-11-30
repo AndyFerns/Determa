@@ -43,6 +43,12 @@ static void print_ast_recursive(AstNode* node, int indent) {
             break;
         }
 
+        case NODE_STRING_LITERAL: {
+            AstNodeStringLiteral* n = (AstNodeStringLiteral*)node;
+            printf("STRING_LITERAL: \"%s\"\n", n->value);
+            break;
+        }
+
         case NODE_UNARY_OP: {
             AstNodeUnaryOp* n = (AstNodeUnaryOp*)node;
             printf("UNARY_OP: %s\n", token_type_to_string(n->op.type));
@@ -134,6 +140,18 @@ void free_ast(AstNode* node) {
         // No children, just free the node
         case NODE_INT_LITERAL:
             break;
+
+
+        /* ================================
+         *  STRING LITERAL
+         *  (No children)
+         *  Free the string copy only
+         * ================================ */
+        case NODE_STRING_LITERAL: {
+            free(((AstNodeStringLiteral*)node)->value); // Free the string copy
+            break;
+        }
+        
 
         /* ================================
          *  BINARY OPERATION
@@ -343,6 +361,23 @@ AstNode* new_int_literal_node(int value, int line) {
 
     return (AstNode*)node;
 }
+
+/**
+ * @brief Creates a new string literal node
+ * 
+ * @param value 
+ * @param line 
+ * @return AstNode* 
+ */
+AstNode* new_string_literal_node(char* value, int line) {
+    AstNodeStringLiteral* node = (AstNodeStringLiteral*)malloc(sizeof(AstNodeStringLiteral));
+    if (!node) return NULL;
+    node->node.type = NODE_STRING_LITERAL;
+    node->node.line = line;
+    node->value = value;
+    return (AstNode*)node;
+}
+
 
 AstNode* new_expr_stmt_node(AstNode* expression, int line) {
     AstNodeExprStmt* node = (AstNodeExprStmt*)malloc(sizeof(AstNodeExprStmt));

@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 #include "vm/vm.h"
@@ -144,6 +145,9 @@ static InterpretResult run() {
     #define READ_BYTE() (*ip++)
     #define READ_CONSTANT() (constants[READ_BYTE()])
 
+    // PEEK macro to use local stackTop
+    #define PEEK(distance) (stackTop[-1 - distance])
+
     // Optimized binary operation macro
     // Note: using const Value ensures no aliasing surprises & better optimization
     #define BINARY_OP(op) \
@@ -203,7 +207,44 @@ static InterpretResult run() {
                 break;
             }
 
-            case OP_ADD:      BINARY_OP(+); break;
+            case OP_ADD: {
+                // Use PEEK macro instead of peek() function
+                if (IS_STRING(PEEK(0)) && IS_STRING(PEEK(1))) {
+                    // String Concatenation
+                    ObjString* b = AS_STRING(PEEK(0));
+                    ObjString* a = AS_STRING(PEEK(1));
+                    
+                    // Pop operands
+                    stackTop -= 2; 
+
+                    int length = a->length + b->length;
+                    char* chars = (char*)malloc(length + 1);
+                    memcpy(chars, a->chars, a->length);
+                    memcpy(chars + a->length, b->chars, b->length);
+                    chars[length] = '\0';
+
+                    // Note: take_string allocates the object and adds it to VM list
+                    // Since vm.objects relies on global vm struct, it's fine.
+                    ObjString* result = take_string(chars, length);
+                    *stackTop++ = OBJ_VAL(result);
+                }
+
+                else if (IS_INT(PEEK(0)) && IS_INT(PEEK(1))) {
+                    // Integer Addition
+                    int b = AS_INT(*(--stackTop));
+                    int a = AS_INT(*(--stackTop));
+                    *stackTop++ = INT_VAL(a + b);
+                }
+
+                else {
+                    vm.ip = ip;
+                    vm.stackTop = stackTop;
+                    runtimeError("Operands must be two numbers or two strings.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
+
             case OP_SUBTRACT: BINARY_OP(-); break;
             case OP_MULTIPLY: BINARY_OP(*); break;
             

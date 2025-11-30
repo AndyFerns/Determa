@@ -60,6 +60,7 @@ const char* token_type_to_string(TokenType type) {
         // Literals
         case TOKEN_INT:       return "TOKEN_INT";
         case TOKEN_ID:        return "TOKEN_ID";
+        case TOKEN_STRING:    return "TOKEN_STRING";
 
         // Keywords
         case TOKEN_VAR:       return "TOKEN_VAR";
