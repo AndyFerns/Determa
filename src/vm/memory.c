@@ -74,3 +74,40 @@ void mark_object(Obj* object) {
 void mark_value(Value value) {
     if (IS_OBJ(value)) mark_object(AS_OBJ(value));
 }
+
+
+static void mark_roots() {
+    // 1. Mark the Stack
+    for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
+        mark_value(*slot);
+    }
+
+    // 2. Mark Globals
+    for (int i = 0; i < GLOBALS_MAX; i++) {
+        mark_value(vm.globals[i]);
+    }
+    
+    // 3. Mark the Compiler's roots (if we were compiling)
+    // For now, we assume GC only runs during runtime interpret().
+}
+
+static void blacken_object(Obj* object) {
+#ifdef DEBUG_LOG_GC
+    printf("%p blacken ", (void*)object);
+    print_value(OBJ_VAL(object));
+    printf("\n");
+#endif
+
+    switch (object->type) {
+        case OBJ_STRING:
+            // Strings have no outgoing references, so nothing to do.
+            break;
+    }
+}
+
+static void trace_references() {
+    while (vm.grayCount > 0) {
+        Obj* object = vm.grayStack[--vm.grayCount];
+        blacken_object(object);
+    }
+}
