@@ -163,6 +163,29 @@ static Token read_number(Lexer* lexer) {
     return make_token(lexer, TOKEN_INT);
 }
 
+
+/**
+ * @brief Function to implement string scanning logic 
+ * 
+ * @param lexer 
+ * @return Token 
+ */
+static Token string(Lexer* lexer) {
+    while (peek(lexer) != '"' && !is_at_end(lexer)) {
+        if (peek(lexer) == '\n') lexer->line++;
+        advance(lexer);
+    }
+
+    if (is_at_end(lexer)) {
+        return error_token(lexer, "Unterminated string.");
+    }
+
+    // The closing quote.
+    advance(lexer);
+    return make_token(lexer, TOKEN_STRING);
+}
+
+
 // --- Main Lexer Function ---
 
 /**
@@ -191,6 +214,11 @@ Token get_next_token(Lexer* lexer) {
     // Check for numbers
     if (isdigit(c)) {
         return read_number(lexer);
+    }
+
+    // Check for double quote 
+    if (c == '"') {
+        return string(lexer);
     }
 
     // Check for single-character tokens
