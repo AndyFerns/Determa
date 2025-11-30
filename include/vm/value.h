@@ -8,7 +8,6 @@
 #define VM_VALUE_H
 
 #include "common.h"
-#include "object.h"
 
 // Forward declaration of Obj (defined in object.h)
 typedef struct Obj Obj;
