@@ -91,6 +91,10 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
         case NODE_INT_LITERAL:
             return TYPE_INT;
 
+        // --- NEW ---
+        case NODE_STRING_LITERAL: 
+            return TYPE_STRING;
+
         case NODE_UNARY_OP: {
             AstNodeUnaryOp* n = (AstNodeUnaryOp*)expr;
             DataType type = check_expression(tc, n->operand);
