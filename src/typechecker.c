@@ -91,7 +91,6 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
         case NODE_INT_LITERAL:
             return TYPE_INT;
 
-        // --- NEW ---
         case NODE_STRING_LITERAL: 
             return TYPE_STRING;
 
@@ -133,15 +132,22 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
             DataType leftType  = check_expression(tc, op->left);
             DataType rightType = check_expression(tc, op->right);
 
-            // Exact rule: Only INT + INT allowed
-            if (leftType == TYPE_INT && rightType == TYPE_INT)
-                return TYPE_INT;
-
             // Propagate type errors
             if (leftType == TYPE_ERROR || rightType == TYPE_ERROR)
                 return TYPE_ERROR;
 
-            error(tc, "Type mismatch in binary operation. Expected ints.");
+
+            // INT + INT 
+            if (leftType == TYPE_INT && rightType == TYPE_INT)
+                return TYPE_INT;
+
+            // STRING + STRING (string concatenation)
+            if (op->op.type == TOKEN_PLUS) {
+                if (leftType == TYPE_STRING && rightType == TYPE_STRING) 
+                    return TYPE_STRING;
+            }
+
+            error(tc, "Type mismatch. Operations support INT (+-*/) or STRING (+ only).");
             return TYPE_ERROR;
         }
 
