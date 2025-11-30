@@ -47,3 +47,30 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
     }
     return result;
 }
+
+void mark_object(Obj* object) {
+    if (object == NULL) return;
+    if (object->isMarked) return; // Already visited
+
+#ifdef DEBUG_LOG_GC
+    printf("%p mark ", (void*)object);
+    print_value(OBJ_VAL(object));
+    printf("\n");
+#endif
+
+    object->isMarked = true;
+
+    // Add to gray stack (worklist)
+    if (vm.grayCapacity < vm.grayCount + 1) {
+        vm.grayCapacity = (vm.grayCapacity < 8) ? 8 : vm.grayCapacity * 2;
+        // Note: We use system realloc here to avoid infinite GC loops
+        vm.grayStack = (Obj**)realloc(vm.grayStack, sizeof(Obj*) * vm.grayCapacity);
+        if (vm.grayStack == NULL) exit(1);
+    }
+
+    vm.grayStack[vm.grayCount++] = object;
+}
+
+void mark_value(Value value) {
+    if (IS_OBJ(value)) mark_object(AS_OBJ(value));
+}
