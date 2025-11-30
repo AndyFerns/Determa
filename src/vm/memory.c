@@ -111,3 +111,56 @@ static void trace_references() {
         blacken_object(object);
     }
 }
+
+
+static void sweep() {
+    Obj* previous = NULL;
+    Obj* object = vm.objects;
+
+    while (object != NULL) {
+        if (object->isMarked) {
+            // It survived! Unmark for next cycle
+            object->isMarked = false;
+            previous = object;
+            object = object->next;
+        } else {
+            // It's garbage. Unlink and free.
+            Obj* unreached = object;
+            object = object->next;
+            
+            if (previous != NULL) {
+                previous->next = object;
+            } else {
+                vm.objects = object; // We freed the head
+            }
+
+#ifdef DEBUG_LOG_GC
+            printf("%p free ", (void*)unreached);
+            print_value(OBJ_VAL(unreached));
+            printf("\n");
+#endif
+
+            free_object(unreached);
+        }
+    }
+}
+
+void collect_garbage() {
+#ifdef DEBUG_LOG_GC
+    printf("-- gc begin --\n");
+    size_t before = vm.bytesAllocated;
+#endif
+
+    mark_roots();
+    trace_references();
+    sweep();
+
+    // Adjust threshold for next run
+    vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
+
+#ifdef DEBUG_LOG_GC
+    printf("-- gc end --\n");
+    printf("   collected %zu bytes (from %zu to %zu) next at %zu\n",
+           before - vm.bytesAllocated, before, vm.bytesAllocated, vm.nextGC);
+#endif
+}
