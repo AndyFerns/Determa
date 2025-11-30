@@ -164,3 +164,22 @@ void collect_garbage() {
            before - vm.bytesAllocated, before, vm.bytesAllocated, vm.nextGC);
 #endif
 }
+
+
+void free_object(Obj* object) {
+    switch (object->type) {
+        case OBJ_STRING: {
+            ObjString* string = (ObjString*)object;
+            // only using FREE_ARRAY macro in chunk.c, but do manual
+            // account keeping or just raw free.
+            // we should ideally use reallocate(ptr, size, 0).
+            // But we don't track individual string size easily here without casting.
+            
+            size_t size = sizeof(ObjString) + string->length + 1;
+            free(string->chars);
+            free(string);
+            vm.bytesAllocated -= size;
+            break;
+        }
+    }
+}
