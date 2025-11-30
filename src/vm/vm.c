@@ -8,10 +8,13 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "vm/vm.h"
 #include "vm/opcode.h"
 #include "vm/common.h"
 #include "vm/value.h"
+#include "vm/object.h" // Need this to access ObjString struct for freeing
 
 // The global VM instance (single VM model)
 VM vm;
@@ -28,16 +31,33 @@ static void reset_stack() {
  */
 void init_vm() {
     reset_stack();
+    vm.objects = NULL; // Initialize the tracker list
+}
+
+// --- Helper to free a single object ---
+static void free_object(Obj* object) {
+    switch (object->type) {
+        case OBJ_STRING: {
+            ObjString* string = (ObjString*)object;
+            free(string->chars); // Free the character array
+            free(string);        // Free the struct itself
+            break;
+        }
+    }
 }
 
 /**
- * @brief Free VM resources.
- *
- * Currently unused because the VM uses static arrays,
- * but remains for future heap-managed values.
+ * @brief Free VM resources for heap-managed resources
  */
 void free_vm() {
-    // No dynamic allocations yet.
+    // Walk the linked list and free every object
+    Obj* object = vm.objects;
+    while (object != NULL) {
+        Obj* next = object->next;
+        free_object(object);
+        object = next;
+    }
+    vm.objects = NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -82,6 +102,19 @@ Value peek(int distance) {
     return vm.stackTop[-1 - distance];
 }
 
+// --- Runtime Error Helper ---
+
+/**
+ * @brief Prints out the error message to the terminal during function runtime
+ * 
+ * @param format 
+ */
+static void runtimeError(const char* format) {
+    fprintf(stderr, "%s\n", format);
+    reset_stack();
+}
+
+
 // -----------------------------------------------------------------------------
 // Core Execution Loop
 // -----------------------------------------------------------------------------
@@ -113,12 +146,19 @@ static InterpretResult run() {
 
     // Optimized binary operation macro
     // Note: using const Value ensures no aliasing surprises & better optimization
-    #define BINARY_OP(op)                          \
-        do {                                       \
-            const Value b = *(--stackTop);         /* pop b */ \
-            const Value a = *(--stackTop);         /* pop a */ \
-            *stackTop++ = (a op b);                /* push (a op b) */ \
-        } while (false)
+    #define BINARY_OP(op) \
+        do { \
+            if (!IS_INT(stackTop[-1]) || !IS_INT(stackTop[-2])) { \
+                vm.ip = ip; \
+                vm.stackTop = stackTop; \
+                runtimeError("Operands must be numbers."); \
+                return INTERPRET_RUNTIME_ERROR; \
+            } \
+            int b = AS_INT(*(--stackTop)); \
+            int a = AS_INT(*(--stackTop)); \
+            *stackTop++ = INT_VAL(a op b); \
+        } while (0)
+
 
     for (;;) {
 
@@ -131,9 +171,7 @@ static InterpretResult run() {
         }
         printf("\n");
 
-        printf("IP %04ld: Opcode %d\n",
-               (long)(ip - vm.chunk->code),
-               *ip);
+        printf("IP %04ld: Opcode %d\n", (long)(ip - vm.chunk->code), *ip);
 #endif
 
         uint8_t instruction = READ_BYTE();
@@ -168,11 +206,34 @@ static InterpretResult run() {
             case OP_ADD:      BINARY_OP(+); break;
             case OP_SUBTRACT: BINARY_OP(-); break;
             case OP_MULTIPLY: BINARY_OP(*); break;
-            case OP_DIVIDE:   BINARY_OP(/); break;
+            
+            case OP_DIVIDE: {
+                if (!IS_INT(stackTop[-1]) || !IS_INT(stackTop[-2])) {
+                    vm.ip = ip; vm.stackTop = stackTop;
+                    runtimeError("Operands must be numbers.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                int b = AS_INT(stackTop[-1]); // Peek
+                if (b == 0) {
+                    vm.ip = ip; vm.stackTop = stackTop;
+                    runtimeError("Division by zero.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                // Now safe to pop and divide
+                b = AS_INT(*(--stackTop));
+                int a = AS_INT(*(--stackTop));
+                *stackTop++ = INT_VAL(a / b);
+                break;
+            }
 
             case OP_NEGATE: {
-                // Optimized negate (modify top-of-stack in place)
-                stackTop[-1] = -stackTop[-1];
+                if (!IS_INT(stackTop[-1])) {
+                    vm.ip = ip; vm.stackTop = stackTop;
+                    runtimeError("Operand must be a number.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                // Unwrap, Negate, Wrap back
+                stackTop[-1] = INT_VAL(-AS_INT(stackTop[-1]));
                 break;
             }
 
@@ -207,5 +268,6 @@ static InterpretResult run() {
 InterpretResult interpret(Chunk* chunk) {
     vm.chunk = chunk;
     vm.ip = vm.chunk->code;
+    reset_stack(); 
     return run();
 }
