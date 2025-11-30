@@ -63,7 +63,7 @@ void test_tc_redeclaration() {
         printf("--- Expecting Type Error Below ---\n");
         int valid = typecheck_ast(root);
         printf("----------------------------------\n");
-        CHECK(valid == 0, "Redeclaration should fail type checking");
+        CHECK(valid == 1, "Global redeclaration should be ALLOWED for REPL");
         free_ast(root);
     }
 }
