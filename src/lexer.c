@@ -14,6 +14,7 @@
  * 
  */
 #include "lexer.h"
+#include "token.h"
 
 #include <string.h> // For memcmp, strlen
 #include <ctype.h>  // For isalpha, isdigit
@@ -146,10 +147,16 @@ static TokenType identifier_type(Lexer* lexer) {
             return check_keyword(lexer, 1, 1, "f", TOKEN_IF);
         
         case 'e': {
-            if (lexer->current - lexer->start == 4) {
-                return check_keyword(lexer, 1, 3, "lif", TOKEN_ELIF);
+            int length = lexer->current - lexer->start;
+            if (length == 4) {
+                if (memcmp(lexer->source + lexer->start, "elif", 4) == 0) {
+                    return TOKEN_ELIF;
+                }
+                if (memcmp(lexer->source + lexer->start, "else", 4) == 0) {
+                    return TOKEN_ELSE;
+                }
             }
-            return check_keyword(lexer, 1, 3, "lse", TOKEN_ELSE);
+            return TOKEN_ID;
         }
         
         case 'w':
@@ -195,6 +202,7 @@ static Token string(Lexer* lexer) {
     }
 
     if (is_at_end(lexer)) {
+        advance(lexer);
         return error_token(lexer, "Unterminated string.");
     }
 
