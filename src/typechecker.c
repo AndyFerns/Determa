@@ -117,6 +117,7 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
                 }
                 return TYPE_BOOL;
             }
+            return TYPE_ERROR;
         }
 
         case NODE_VAR_ACCESS: {
