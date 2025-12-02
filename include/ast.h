@@ -25,6 +25,7 @@ typedef enum {
     NODE_PROGRAM,           // Root Node, holds a list of statements 
     NODE_INT_LITERAL,       // A simple integer
     NODE_STRING_LITERAL,    // Represents a string literal
+    NODE_BOOL_LITERAL,      // Represents a boolean literal
     NODE_UNARY_OP,          // An operation like -5
     NODE_BINARY_OP,         // An operation like 1 + 2
     NODE_VAR_DECL,          // var x = 10;
@@ -78,10 +79,23 @@ typedef struct {
  */
 typedef struct {
     AstNode node;
-    char* value;
+    char* value; // Null-terminated string content (quotes stripped)
 } AstNodeStringLiteral;
 
 
+/**
+ * @brief Represents a boolean literal (eg. True False)
+ * 
+ */
+typedef struct {
+    AstNode node;
+    int value;  // 1 for true 0 for false
+} AstNodeBoolLiteral;
+
+/**
+ * @brief Represents a unary operator (eg -5, -int)
+ * 
+ */
 typedef struct {
     AstNode node;       // Base class
     Token op;           // operation to be performed ('-')
@@ -194,6 +208,11 @@ AstNode* new_int_literal_node(int value, int line);
  * @brief Creates a new String literal AST node
  */
 AstNode* new_string_literal_node(char* value, int line);
+
+/**
+ * @brief Creates a new boolean literal ast node
+ */
+AstNode* new_bool_literal_node(int value, int line);
 
 /**
  * @brief Creates a new Binary Operator AST node
