@@ -146,7 +146,7 @@ static InterpretResult run() {
     Value* stackTop = vm.stackTop;
     Value* stack = vm.stack;
 
-    // (void)stack;
+    (void)stack;
 
     // Cache constants array pointer for faster access
     Value* constants = vm.chunk->constants.values;
