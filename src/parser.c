@@ -221,9 +221,13 @@ static AstNode* parse_primary(Parser* parser) {
  */
 static AstNode* parse_unary(Parser* parser) {
     TRACE_ENTER("Unary");
-    if (match(parser, (TokenType[]){TOKEN_MINUS}, 1)) {
+
+    // FIX: Explicitly match TOKEN_BANG (!) here
+    TokenType ops[] = {TOKEN_MINUS, TOKEN_BANG};
+
+    if (match(parser, ops, 2)) {
         Token operator = parser->previous;
-        // Recursively call unary to handle --number
+        // recursively call unary
         AstNode* operand = parse_unary(parser);
         TRACE_EXIT("Unary (Op)");
         return new_unary_op_node(operator, operand, operator.line);
@@ -455,10 +459,11 @@ AstNode* parse(const char* source, int pda_debug_mode) {
 
     /* ---- Init Parser State ---- */
     Parser parser;
-    parser.lexer     = init_lexer(source);
+    parser.lexer = init_lexer(source);
     parser.had_error = 0;
 
-    advance(&parser);     // Load first token
+    // Load first token
+    advance(&parser);
 
     // Create Program Node 
     AstNode* program = new_program_node(NULL, 0);
