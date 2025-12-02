@@ -171,3 +171,65 @@ void test_parser_program() {
     
     free_ast(root);
 }
+
+
+
+void test_parser_bool_literals() {
+    // Test 'true'
+    const char* source1 = "true;";
+    AstNode* root1 = parse(source1, 0);
+    AstNode* ast1 = get_first_stmt_expr(root1);
+    
+    CHECK(ast1->type == NODE_BOOL_LITERAL, "AST is BOOL_LITERAL");
+    if (ast1->type == NODE_BOOL_LITERAL) {
+        CHECK(((AstNodeBoolLiteral*)ast1)->value == 1, "true has value 1");
+    }
+    free_ast(root1);
+
+    // Test 'false'
+    const char* source2 = "false;";
+    AstNode* root2 = parse(source2, 0);
+    AstNode* ast2 = get_first_stmt_expr(root2);
+    
+    CHECK(ast2->type == NODE_BOOL_LITERAL, "AST is BOOL_LITERAL");
+    if (ast2->type == NODE_BOOL_LITERAL) {
+        CHECK(((AstNodeBoolLiteral*)ast2)->value == 0, "false has value 0");
+    }
+    free_ast(root2);
+}
+
+void test_parser_logic_precedence() {
+    // This is the big one: "1 + 2 < 3 == true"
+    // Precedence Order: (+) -> (<) -> (==)
+    // Structure: ( (1 + 2) < 3 ) == true
+    
+    const char* source = "1 + 2 < 3 == true;";
+    AstNode* root = parse(source, 0);
+    AstNode* ast = get_first_stmt_expr(root);
+
+    // 1. Root should be '=='
+    CHECK(ast->type == NODE_BINARY_OP, "Root is BINARY_OP");
+    AstNodeBinaryOp* eq = (AstNodeBinaryOp*)ast;
+    CHECK(eq->op.type == TOKEN_EQUAL_EQUAL, "Root op is ==");
+
+    // 2. Right side should be 'true'
+    CHECK(eq->right->type == NODE_BOOL_LITERAL, "Right of == is BOOL");
+
+    // 3. Left side should be '<'
+    CHECK(eq->left->type == NODE_BINARY_OP, "Left of == is BINARY_OP");
+    AstNodeBinaryOp* lt = (AstNodeBinaryOp*)eq->left;
+    CHECK(lt->op.type == TOKEN_LESS, "Left op is <");
+
+    // 4. Left side of '<' should be '+'
+    CHECK(lt->left->type == NODE_BINARY_OP, "Left of < is BINARY_OP");
+    AstNodeBinaryOp* add = (AstNodeBinaryOp*)lt->left;
+    CHECK(add->op.type == TOKEN_PLUS, "Left of < op is +");
+
+    // 5. Right side of '<' should be '3'
+    CHECK(lt->right->type == NODE_INT_LITERAL, "Right of < is INT");
+
+    printf("--- AST for Logic Precedence ---\n");
+    print_ast(root);
+
+    free_ast(root);
+}
