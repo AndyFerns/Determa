@@ -38,7 +38,13 @@ typedef enum {
     
     // Operand: [1 byte index]
     // Action: Pop stack, store in globals[index]
-    OP_SET_GLOBAL,  
+    OP_SET_GLOBAL,
+
+    // --- Control Flow (NEW) ---
+    OP_POP,           // Pop top value (cleanup)
+    OP_JUMP,          // Unconditional Jump (Forward)
+    OP_JUMP_IF_FALSE, // Conditional Jump (Forward)
+    OP_LOOP,          // Unconditional Jump (Backward)
 
     // --- Statements ---
     OP_PRINT,        // Pop 1, Print it
