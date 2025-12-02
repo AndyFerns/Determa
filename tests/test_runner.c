@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
     run_test(test_all_tokens, "Lexer - Comprehensive Token Stream");
     run_test(test_line_numbers, "Lexer - Line Number Increments");
     run_test(test_whitespace_and_comments, "Lexer - Whitespace and Comment Skipping");
+    run_test(test_lexer_booleans_comparisons, "Lexer - Booleans and Conditionals checking");
 
     // Phase 2 (Parser) Test Suite
     printf("\n"); // separator
@@ -58,6 +59,7 @@ int main(int argc, char* argv[]) {
     test_gc_suite();
 
     // --- NEW: Phase 6 Tests ---
+    printf("\n");
     run_test(test_parser_bool_literals, "Parser - Bool Literals");
     run_test(test_parser_logic_precedence, "Parser - Logic Precedence");
 
