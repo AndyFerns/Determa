@@ -131,8 +131,7 @@ static void emit_constant(Compiler* compiler, Value value, int line) {
  */
 static int emit_jump(Compiler* compiler, uint8_t instruction, int line) {
     emit_byte(compiler, instruction, line);
-    emit_byte(compiler, 0xff, line); // Placeholder High
-    emit_byte(compiler, 0xff, line); // Placeholder Low
+    emit_bytes(compiler, 0xff, 0xff, line); // helper to emit 2 placeholder bytes
     return compiler->chunk->count - 2;
 }
 
@@ -172,8 +171,7 @@ static void emit_loop(Compiler* compiler, int loopStart, int line) {
         compiler->hadError = 1;
     }
 
-    emit_byte(compiler, (offset >> 8) & 0xff, line);
-    emit_byte(compiler, offset & 0xff, line);
+    emit_bytes(compiler, (offset >> 8) & 0xff, offset & 0xff, line); // helper to clear two offsets
 }
 
 /**
@@ -445,11 +443,8 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
         case NODE_EXPR_STMT: {
             AstNodeExprStmt* n = (AstNodeExprStmt*)stmt;
             compile_expression(compiler, n->expression);
-            if (compiler->hadError) return;
-            // Pop the resulting value of the expression, since it's a statement
-            // TODO: Emit OP_POP
-            // emit_byte(compiler, OP_POP, n->node.line;
-
+            // Expression as statement should pop its value
+            emit_byte(compiler, OP_POP, n->node.line); 
             break;
         }
 
