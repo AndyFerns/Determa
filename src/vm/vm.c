@@ -367,7 +367,7 @@ static InterpretResult run() {
 
             case OP_PRINT: {
                 Value v = *(--stackTop);   // pop()
-                printf("Out: ");    // prefix output for debugging
+                // printf("Out: ");    // prefix output for debugging
                 print_value(v);
                 printf("\n");
                 break;

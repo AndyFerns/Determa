@@ -1,0 +1,82 @@
+// ==========================================
+// 🌲 Determa Language Feature Tour
+// ==========================================
+
+print "--- 1. VARIABLES & TYPES ---";
+
+var integerVal = 42;
+var stringVal = "Determa is running!";
+var boolVal = true;
+
+print "Integer:";
+print integerVal;
+print "String:";
+print stringVal;
+print "Boolean:";
+print boolVal;
+
+print ""; // Empty line
+
+// ==========================================
+
+print "--- 2. ARITHMETIC & PRECEDENCE ---";
+
+// Order of operations: 10 * 5 = 50, then 100 - 50 = 50
+var mathResult = 100 - 10 * 5; 
+print "100 - 10 * 5 =";
+print mathResult;
+
+// Grouping
+var groupResult = (100 - 10) * 5;
+print "(100 - 10) * 5 =";
+print groupResult;
+
+// Unary negation
+var negative = -50;
+print "Negative number:";
+print negative;
+
+print "";
+
+// ==========================================
+
+print "--- 3. LOGIC & COMPARISON ---";
+
+var isGreater = 10 > 5;
+print "Is 10 > 5?";
+print isGreater; // true
+
+var isEqual = 50 == 50;
+print "Is 50 == 50?";
+print isEqual;   // true
+
+var logicCheck = !(10 < 5);
+print "Is NOT (10 < 5)?";
+print logicCheck; // true
+
+print "";
+
+// ==========================================
+
+print "--- 4. CONTROL FLOW (BRANCHING) ---";
+
+var score = 85;
+print "Score";
+print score;
+
+// Notice: No parentheses required around conditions!
+if score >= 90 {
+    print "Grade: A";
+} 
+elif score >= 80 {
+    print "Grade: B";
+} 
+else {
+    print "Grade: C or lower";
+}
+
+print "";
+
+// ==========================================
+// End of Demo
+// ==========================================
