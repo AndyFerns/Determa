@@ -351,6 +351,69 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
     if (compiler->hadError || stmt == NULL) return;
 
     switch (stmt->type) {
+        // --- Block ---
+        case NODE_BLOCK: {
+            AstNodeBlock* block = (AstNodeBlock*)stmt;
+            for (int i = 0; i < block->statement_count; i++) {
+                compile_statement(compiler, block->statements[i]);
+            }
+            break;
+        }
+
+        // --- If Statement ---
+        case NODE_IF: {
+            AstNodeIf* n = (AstNodeIf*)stmt;
+            // 1. Compile Condition
+            compile_expression(compiler, n->condition);
+            
+            // 2. Jump over "then" if false
+            int thenJump = emit_jump(compiler, OP_JUMP_IF_FALSE, n->node.line);
+            emit_byte(compiler, OP_POP, n->node.line); // Clean up condition if true
+            
+            // 3. Compile "then" block
+            compile_statement(compiler, n->thenBranch);
+            
+            // 4. Jump over "else"
+            int elseJump = emit_jump(compiler, OP_JUMP, n->node.line);
+            
+            // 5. Patch start of "else" (target of thenJump)
+            patch_jump(compiler, thenJump);
+            emit_byte(compiler, OP_POP, n->node.line); // Clean up condition if false (jump landed here)
+            
+            // 6. Compile "else" block (if exists)
+            if (n->elseBranch) {
+                compile_statement(compiler, n->elseBranch);
+            }
+            
+            // 7. Patch end of if (target of elseJump)
+            patch_jump(compiler, elseJump);
+            break;
+        }
+
+        // --- While Loop ---
+        case NODE_WHILE: {
+            AstNodeWhile* n = (AstNodeWhile*)stmt;
+            int loopStart = compiler->chunk->count; // Mark start of loop
+            
+            // 1. Condition
+            compile_expression(compiler, n->condition);
+            
+            // 2. Jump out if false
+            int exitJump = emit_jump(compiler, OP_JUMP_IF_FALSE, n->node.line);
+            emit_byte(compiler, OP_POP, n->node.line); // Clean up condition if true
+            
+            // 3. Body
+            compile_statement(compiler, n->body);
+            
+            // 4. Loop back
+            emit_loop(compiler, loopStart, n->node.line);
+            
+            // 5. Patch exit
+            patch_jump(compiler, exitJump);
+            emit_byte(compiler, OP_POP, n->node.line); // Clean up condition if false
+            break;
+        }
+
         case NODE_VAR_DECL: {
             AstNodeVarDecl* n = (AstNodeVarDecl*)stmt;
             
