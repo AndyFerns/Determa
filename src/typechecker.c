@@ -102,14 +102,16 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
             AstNodeUnaryOp* n = (AstNodeUnaryOp*)expr;
             DataType type = check_expression(tc, n->operand);
 
-            // Unary '-'
-            if (type != TYPE_INT) {
-                error(tc, "Unary '-' only applies to numbers.");
-                return TYPE_ERROR;
+            // If operator type is '-'
+            if (n->op.type == TOKEN_MINUS) {
+                if (type != TYPE_INT) {
+                    error(tc, "Unary '-' only applies to numbers.");
+                    return TYPE_ERROR;
+                }
+                return TYPE_INT;
             }
-            return TYPE_INT;
-
-            // --- Logic Not ---
+            
+            // if operator type is "!"
             if (n->op.type == TOKEN_BANG) {
                 if (type != TYPE_BOOL) {
                     error(tc, "Unary '!' only applies to booleans.");
