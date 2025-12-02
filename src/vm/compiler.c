@@ -88,6 +88,14 @@ static void emit_byte(Compiler* compiler, uint8_t byte, int line) {
 }
 
 /**
+ * @brief Function to Emit two bytes (used for jump offsets)
+ */
+static void emit_bytes(Compiler* compiler, uint8_t byte1, uint8_t byte2, int line) {
+    emit_byte(compiler, byte1, line);
+    emit_byte(compiler, byte2, line);
+}
+
+/**
  * @brief Emits an OpCode followed by a constant index.
  */
 static void emit_constant(Compiler* compiler, Value value, int line) {
@@ -110,6 +118,62 @@ static void emit_constant(Compiler* compiler, Value value, int line) {
     emit_byte(compiler, OP_CONSTANT, line);
     // Note: We currently assume the constant index fits in a single byte (max 256 constants)
     emit_byte(compiler, (uint8_t)constantIndex, line); 
+}
+
+
+/**
+ * @brief Emit a jump instruction with a placeholder operand. 
+ * 
+ * @param compiler 
+ * @param instruction 
+ * @param line 
+ * @return int The index of the placeholder so we can patch it later.
+ */
+static int emit_jump(Compiler* compiler, uint8_t instruction, int line) {
+    emit_byte(compiler, instruction, line);
+    emit_byte(compiler, 0xff, line); // Placeholder High
+    emit_byte(compiler, 0xff, line); // Placeholder Low
+    return compiler->chunk->count - 2;
+}
+
+
+/**
+ * @brief Function to Go back to 'offset' and write the jump distance to current location
+ * 
+ * @param compiler 
+ * @param offset 
+ */
+static void patch_jump(Compiler* compiler, int offset) {
+    // -2 to adjust for the jump offset itself
+    int jump = compiler->chunk->count - offset - 2;
+
+    if (jump > UINT16_MAX) {
+        fprintf(stderr, "Too much code to jump over.\n");
+        compiler->hadError = 1;
+    }
+
+    compiler->chunk->code[offset] = (jump >> 8) & 0xff;
+    compiler->chunk->code[offset + 1] = jump & 0xff;
+}
+
+/**
+ * @brief Emit a backward jump loop (used in While conditional blocks)
+ * 
+ * @param compiler 
+ * @param loopStart 
+ * @param line 
+ */
+static void emit_loop(Compiler* compiler, int loopStart, int line) {
+    emit_byte(compiler, OP_LOOP, line);
+
+    int offset = compiler->chunk->count - loopStart + 2;
+    if (offset > UINT16_MAX) {
+        fprintf(stderr, "Loop body too large.\n");
+        compiler->hadError = 1;
+    }
+
+    emit_byte(compiler, (offset >> 8) & 0xff, line);
+    emit_byte(compiler, offset & 0xff, line);
 }
 
 /**
