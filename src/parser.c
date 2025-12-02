@@ -62,6 +62,8 @@ static AstNode* parse_unary(Parser* parser);
 static AstNode* parse_primary(Parser* parser);
 static AstNode* parse_declaration(Parser* parser);
 static AstNode* parse_statement(Parser* parser);
+static AstNode* parse_block(Parser* parser);
+static AstNode* parse_if_statement(Parser* parser);
 
 // --- Error Handling & Token Helpers ---
 
@@ -390,35 +392,6 @@ static AstNode* parse_var_declaration(Parser* parser) {
     return new_var_decl_node(name, initializer, line);
 }
 
-/**
- * @brief Handles executable statements (non-declaration)
- * 
- * eg: 
- * @code 
-    print x + 1;
-    x + y * 2;
-    a = b + c;   // If assignment handled later
-   @endcode
- * 
- * @param parser 
- * @return AstNode* 
- */
-static AstNode* parse_statement(Parser* parser) {
-    TRACE_ENTER("Statement");
-    if (match(parser, (TokenType[]){TOKEN_PRINT}, 1)) {
-        AstNode* stmt = parse_print_statement(parser);
-        TRACE_EXIT("Statement (Print)");
-        return stmt;
-    }
-    
-    // If it's not a print statement, assume it's an expression statement
-    AstNode* expr = parse_expression(parser);
-    consume(parser, TOKEN_SEMICOLON, "Expected ';' after expression");
-    TRACE_EXIT("Statement (Expr)");
-    
-    // Use expression's line for the statement line
-    return new_expr_stmt_node(expr, expr ? expr->line : parser->previous.line);
-}
 
 /**
  * @brief The top-level controller
@@ -440,6 +413,130 @@ static AstNode* parse_declaration(Parser* parser) {
     AstNode* stmt = parse_statement(parser);
     TRACE_EXIT("Declaration (Stmt)");
     return stmt;
+}
+
+
+/**
+ * @brief Parses a block of statements enclosed in curly braces.
+ * Determa uses C-style braces `{ ... }` for blocks.
+ * 
+ * @param parser The parser instance.
+ * @return AstNode* The block node containing the statement list.
+ */
+static AstNode* parse_block(Parser* parser) {
+    TRACE_ENTER("Block");
+    int line = parser->previous.line;
+    AstNode* block = new_block_node(line);
+    
+    while (!check(parser, TOKEN_RIGHT_BRACE) && !check(parser, TOKEN_EOF)) {
+        AstNode* stmt = parse_declaration(parser);
+        if (stmt) block_add_statement(block, stmt);
+    }
+    
+    consume(parser, TOKEN_RIGHT_BRACE, "Expected '}' after block.");
+    TRACE_EXIT("Block");
+    return block;
+}
+
+
+/**
+ * @brief Parses an if-statement with optional elif/else blocks.
+ * 
+ * Syntax: 
+ * if condition { ... }
+ * 
+ * elif condition { ... }
+ * 
+ * else { ... }
+ * 
+ * @note Determa does not require parentheses around the condition.
+ */
+static AstNode* parse_if_statement(Parser* parser) {
+    TRACE_ENTER("IfStmt");
+    int line = parser->previous.line; 
+    
+    AstNode* condition = parse_expression(parser);
+    
+    consume(parser, TOKEN_LEFT_BRACE, "Expected '{' after if condition.");
+    AstNode* thenBranch = parse_block(parser);
+    
+    AstNode* elseBranch = NULL;
+    if (match(parser, (TokenType[]){TOKEN_ELIF}, 1)) {
+        elseBranch = parse_if_statement(parser); // Recursively parse 'elif' as new 'if'
+    } 
+    else if (match(parser, (TokenType[]){TOKEN_ELSE}, 1)) {
+        consume(parser, TOKEN_LEFT_BRACE, "Expected '{' after else.");
+        elseBranch = parse_block(parser);
+    }
+
+    TRACE_EXIT("IfStmt");
+    return new_if_node(condition, thenBranch, elseBranch, line);
+}
+
+
+/**
+ * @brief Parses a while-loop.
+ * 
+ * Syntax: while condition { ... }
+ */
+static AstNode* parse_while_statement(Parser* parser) {
+    TRACE_ENTER("WhileStmt");
+    int line = parser->previous.line; 
+    
+    AstNode* condition = parse_expression(parser);
+    consume(parser, TOKEN_LEFT_BRACE, "Expected '{' after while condition.");
+    AstNode* body = parse_block(parser);
+    
+    TRACE_EXIT("WhileStmt");
+    return new_while_node(condition, body, line);
+}
+
+/**
+ * @brief Handles executable statements (non-declaration)
+ * 
+ * eg: 
+ * @code 
+    print x + 1;
+    x + y * 2;
+    a = b + c;   // If assignment handled later
+   @endcode
+ * 
+ * @param parser 
+ * @return AstNode* 
+ */
+static AstNode* parse_statement(Parser* parser) {
+    TRACE_ENTER("Statement");
+
+    if (match(parser, (TokenType[]){TOKEN_IF}, 1)) {
+        AstNode* stmt = parse_if_statement(parser);
+        TRACE_EXIT("Statement (if)");
+        return stmt;
+    }
+
+    if (match(parser, (TokenType[]){TOKEN_WHILE}, 1)) {
+        AstNode* stmt = parse_while_statement(parser);
+        TRACE_EXIT("Statement (while)");
+        return stmt;
+    }
+    if (match(parser, (TokenType[]){TOKEN_LEFT_BRACE}, 1)) {
+        AstNode* stmt = parse_block(parser);
+        TRACE_EXIT("Statement (block)");
+        return stmt;
+    }
+
+    if (match(parser, (TokenType[]){TOKEN_PRINT}, 1)) {
+        AstNode* stmt = parse_print_statement(parser);
+        TRACE_EXIT("Statement (Print)");
+        return stmt;
+    }
+    
+    // If it's not a print statement, assume it's an expression statement
+    AstNode* expr = parse_expression(parser);
+    consume(parser, TOKEN_SEMICOLON, "Expected ';' after expression");
+    TRACE_EXIT("Statement (Expr)");
+    
+    // Use expression's line for the statement line
+    return new_expr_stmt_node(expr, expr ? expr->line : parser->previous.line);
 }
 
 /**
