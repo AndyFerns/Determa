@@ -57,6 +57,16 @@ const char* token_type_to_string(TokenType type) {
         case TOKEN_SEMICOLON: return "TOKEN_SEMICOLON";
         case TOKEN_EQUALS:    return "TOKEN_EQUALS";
 
+        case TOKEN_BANG:          return "TOKEN_BANG";
+        case TOKEN_BANG_EQUAL:    return "TOKEN_BANG_EQUAL";
+        case TOKEN_EQUAL_EQUAL:   return "TOKEN_EQUAL_EQUAL";
+        case TOKEN_GREATER:       return "TOKEN_GREATER";
+        case TOKEN_GREATER_EQUAL: return "TOKEN_GREATER_EQUAL";
+        case TOKEN_LESS:          return "TOKEN_LESS";
+        case TOKEN_LESS_EQUAL:    return "TOKEN_LESS_EQUAL";
+        case TOKEN_TRUE:          return "TOKEN_TRUE";
+        case TOKEN_FALSE:         return "TOKEN_FALSE";
+
         // Literals
         case TOKEN_INT:       return "TOKEN_INT";
         case TOKEN_ID:        return "TOKEN_ID";
