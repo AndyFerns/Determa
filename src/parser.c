@@ -3,6 +3,21 @@
  * @brief Implementation of the Determa Parser
  *
  * This is a recursive descent parser that builds the AST
+ * 
+ * 
+ * PRECIDENCE HEIRARCHY (As of v0.2)
+ * 
+    Equality (==, !=)
+
+    Comparison (<, >, <=, >=)
+
+    Term (+, -)
+
+    Factor (*, /)
+
+    Unary (!, -)
+
+    Primary (true, false, 123, (...))
  */
 
 #include "parser.h"
@@ -39,6 +54,8 @@ typedef struct {
 
 // --- Forward Declarations for recursive functions ---
 static AstNode* parse_expression(Parser* parser);
+static AstNode* parse_equality(Parser* parser);
+static AstNode* parse_comparison(Parser* parser);
 static AstNode* parse_term(Parser* parser);
 static AstNode* parse_factor(Parser* parser);
 static AstNode* parse_unary(Parser* parser);
@@ -130,6 +147,21 @@ static int match(Parser* parser, TokenType types[], int count) {
  */
 static AstNode* parse_primary(Parser* parser) {
     TRACE_ENTER("Primary");
+    // Check true boolean parsing
+    if (check(parser, TOKEN_TRUE)) {
+        advance(parser);
+        TRACE_EXIT("Primary (Bool)");
+        return new_bool_literal_node(1, parser->previous.line);
+    }
+
+    // Check false boolean parsing
+    if (check(parser, TOKEN_FALSE)) {
+        advance(parser);
+        TRACE_EXIT("Primary (Bool)");
+        return new_bool_literal_node(0, parser->previous.line);
+    }
+
+
     // It's a number literal
     if (check(parser, TOKEN_INT)) {
         char buf[64];
@@ -255,9 +287,41 @@ static AstNode* parse_term(Parser* parser) {
  */
 static AstNode* parse_expression(Parser* parser) {
     TRACE_ENTER("Expression");
-    // This is the entry point for the precedence stack
-    AstNode* node = parse_term(parser);
+    // Start at the lowest precedence (Equality)
+    AstNode* node = parse_equality(parser);
     TRACE_EXIT("Expression");
+    return node;
+}
+
+
+// --- Comparison Parsing ---
+static AstNode* parse_comparison(Parser* parser) {
+    TRACE_ENTER("Comparison");
+    AstNode* node = parse_term(parser);
+
+    TokenType op_types[] = {TOKEN_GREATER, TOKEN_GREATER_EQUAL, TOKEN_LESS, TOKEN_LESS_EQUAL};
+    while (match(parser, op_types, 4)) {
+        Token op = parser->previous;
+        AstNode* right = parse_term(parser);
+        node = new_binary_op_node(op, node, right, op.line);
+    }
+    
+    TRACE_EXIT("Comparison");
+    return node;
+}
+
+static AstNode* parse_equality(Parser* parser) {
+    TRACE_ENTER("Equality");
+    AstNode* node = parse_comparison(parser);
+
+    TokenType op_types[] = {TOKEN_BANG_EQUAL, TOKEN_EQUAL_EQUAL};
+    while (match(parser, op_types, 2)) {
+        Token op = parser->previous;
+        AstNode* right = parse_comparison(parser);
+        node = new_binary_op_node(op, node, right, op.line);
+    }
+    
+    TRACE_EXIT("Equality");
     return node;
 }
 
