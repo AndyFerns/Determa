@@ -63,6 +63,15 @@ int main(int argc, char* argv[]) {
     run_test(test_parser_bool_literals, "Parser - Bool Literals");
     run_test(test_parser_logic_precedence, "Parser - Logic Precedence");
 
+    // --- NEW: Phase 6 Part B Tests ---
+    printf("\n");
+    run_test(test_parser_block, "Parser - Blocks {}");
+    run_test(test_parser_if, "Parser - If/Else");
+    run_test(test_parser_while, "Parser - While Loop");
+
+    // ... Rest of file ...
+    printf("\n");
+
     // --- Add more tests here as we build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");
 
