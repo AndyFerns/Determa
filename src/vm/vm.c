@@ -217,6 +217,43 @@ static InterpretResult run() {
                 break;
             }
 
+            // Conditional and equivalance logic;
+            case OP_TRUE:  *stackTop++ = BOOL_VAL(true); break;
+            case OP_FALSE: *stackTop++ = BOOL_VAL(false); break;
+            
+            case OP_EQUAL: {
+                Value b = *(--stackTop);
+                Value a = *(--stackTop);
+                *stackTop++ = BOOL_VAL(values_equal(a, b));
+                break;
+            }
+            case OP_GREATER: {
+                if (!IS_INT(PEEK(0)) || !IS_INT(PEEK(1))) { vm.ip = ip; vm.stackTop = stackTop; runtimeError("Operands must be numbers."); return INTERPRET_RUNTIME_ERROR; }
+                int b = AS_INT(*(--stackTop));
+                int a = AS_INT(*(--stackTop));
+                *stackTop++ = BOOL_VAL(a > b);
+                break;
+            }
+            case OP_LESS: {
+                if (!IS_INT(PEEK(0)) || !IS_INT(PEEK(1))) { vm.ip = ip; vm.stackTop = stackTop; runtimeError("Operands must be numbers."); return INTERPRET_RUNTIME_ERROR; }
+                int b = AS_INT(*(--stackTop));
+                int a = AS_INT(*(--stackTop));
+                *stackTop++ = BOOL_VAL(a < b);
+                break;
+            }
+            case OP_NOT: {
+                Value v = *(--stackTop);
+                // Handle booleans directly
+                if (IS_BOOL(v)) {
+                    *stackTop++ = BOOL_VAL(!AS_BOOL(v));
+                } else {
+                    vm.ip = ip; vm.stackTop = stackTop;
+                    runtimeError("Operand must be a boolean.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
+
             case OP_ADD: {
                 // Use PEEK macro instead of peek() function
                 if (IS_STRING(PEEK(0)) && IS_STRING(PEEK(1))) {

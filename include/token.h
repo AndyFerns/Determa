@@ -27,13 +27,22 @@ typedef enum {
     TOKEN_LPAREN,     // (
     TOKEN_RPAREN,     // )
 
-    // Arithmetic Operators and 
+    // Arithmetic Operators 
     TOKEN_PLUS,       // +
     TOKEN_MINUS,      // -
     TOKEN_STAR,       // *
     TOKEN_SLASH,      // /
     TOKEN_SEMICOLON,  // ;
-    TOKEN_EQUALS,     // =
+    TOKEN_EQUALS,     // = (assignment)
+
+    // Conditional 1-2 character tokens
+    TOKEN_BANG,         // ! (negation)
+    TOKEN_BANG_EQUAL,  // != (not equals to)
+    TOKEN_EQUAL_EQUAL,  // == (equivalence)
+    TOKEN_LESS,         // <
+    TOKEN_LESS_EQUAL,   // <=
+    TOKEN_GREATER,      // >
+    TOKEN_GREATER_EQUAL,// >=
 
     // Literals
     TOKEN_INT,        // 123
@@ -43,6 +52,8 @@ typedef enum {
     // Keywords
     TOKEN_VAR,        // var
     TOKEN_PRINT,      // print
+    TOKEN_TRUE,       // true
+    TOKEN_FALSE,      // false
 
     // Control tokens
     TOKEN_ERROR,      // Represents a lexing error

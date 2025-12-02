@@ -15,6 +15,8 @@
 typedef enum {
     // --- Loading Values ---
     OP_CONSTANT,     // Load a constant from the pool. [OP_CONSTANT] [INDEX]
+    OP_TRUE,         // Push True
+    OP_FALSE,        // Push False
 
     // --- Arithmetic ---
     OP_ADD,          // Pop 2, Add, Push result
@@ -22,6 +24,12 @@ typedef enum {
     OP_MULTIPLY,     // Pop 2, Multiply, Push result
     OP_DIVIDE,       // Pop 2, Divide, Push result
     OP_NEGATE,       // Pop 1, Negate, Push result
+
+    // --- Logic & Comparison ---
+    OP_NOT,          // !
+    OP_EQUAL,        // ==
+    OP_GREATER,      // >
+    OP_LESS,         // <
 
     // --- Variables ---
     // Operand: [1 byte index]

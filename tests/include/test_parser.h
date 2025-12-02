@@ -39,6 +39,10 @@ void test_parser_print_statement();
 /**
  * @brief Test parser program formation + parsing
  */
-void test_parser_program();         
+void test_parser_program();
+
+// --- NEW TESTS (Phase 6) ---
+void test_parser_bool_literals();
+void test_parser_logic_precedence();
 
 #endif // TEST_PARSER_H

@@ -117,10 +117,31 @@ static void emit_constant(Compiler* compiler, Value value, int line) {
  */
 static void emit_binary_op(Compiler* compiler, TokenType opType, int line) {
     switch (opType) {
+        // --- Arithmetic Operations ---
         case TOKEN_PLUS:  emit_byte(compiler, OP_ADD, line); break;
         case TOKEN_MINUS: emit_byte(compiler, OP_SUBTRACT, line); break;
         case TOKEN_STAR:  emit_byte(compiler, OP_MULTIPLY, line); break;
         case TOKEN_SLASH: emit_byte(compiler, OP_DIVIDE, line); break;
+
+        // --- Comparisons ---
+        case TOKEN_EQUAL_EQUAL:   emit_byte(compiler, OP_EQUAL, line); break;
+        case TOKEN_GREATER:       emit_byte(compiler, OP_GREATER, line); break;
+        case TOKEN_LESS:          emit_byte(compiler, OP_LESS, line); break;
+
+        // Composite Ops (Syntactic Sugar in Bytecode)
+        case TOKEN_BANG_EQUAL:    
+            emit_byte(compiler, OP_EQUAL, line); 
+            emit_byte(compiler, OP_NOT, line);   
+            break;
+        case TOKEN_GREATER_EQUAL: 
+            emit_byte(compiler, OP_LESS, line);    // !(a < b)
+            emit_byte(compiler, OP_NOT, line);
+            break;
+        case TOKEN_LESS_EQUAL:    
+            emit_byte(compiler, OP_GREATER, line); // !(a > b)
+            emit_byte(compiler, OP_NOT, line);
+            break;
+
         default:
             fprintf(stderr, "Compiler Error: Unsupported binary operator token %d\n", opType);
             compiler->hadError = 1;
@@ -200,6 +221,12 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
             break;
         }
 
+        case NODE_BOOL_LITERAL: {
+            AstNodeBoolLiteral* n = (AstNodeBoolLiteral*)expr;
+            emit_byte(compiler, n->value ? OP_TRUE : OP_FALSE, n->node.line);
+            break;
+        }
+
         // Handles variable access (x + 1)
         case NODE_VAR_ACCESS: {
             AstNodeVarAccess* n = (AstNodeVarAccess*)expr;
@@ -223,7 +250,11 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
             AstNodeUnaryOp* n = (AstNodeUnaryOp*)expr;
             compile_expression(compiler, n->operand);
             if (n->op.type == TOKEN_MINUS) {
+                // '-' negate operator
                 emit_byte(compiler, OP_NEGATE, n->op.line);
+            } else if (n->op.type == TOKEN_BANG) {
+                // ! not operator
+                emit_byte(compiler, OP_NOT, n->op.line);
             }
             break;
         }

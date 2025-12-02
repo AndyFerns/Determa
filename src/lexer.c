@@ -137,6 +137,10 @@ static TokenType identifier_type(Lexer* lexer) {
             return check_keyword(lexer, 1, 4, "rint", TOKEN_PRINT);
         case 'v':
             return check_keyword(lexer, 1, 2, "ar", TOKEN_VAR);
+        case 't':
+            return check_keyword(lexer, 1, 3, "rue", TOKEN_TRUE);
+        case 'f':
+            return check_keyword(lexer, 1, 4, "alse", TOKEN_FALSE);
     }
     return TOKEN_ID; // Default to identifier
 }
@@ -186,6 +190,22 @@ static Token string(Lexer* lexer) {
 }
 
 
+/**
+ * @brief Helper to match the next character (for 2 character tokens)
+ * 
+ * @param lexer 
+ * @param expected expected character to be matched
+ * @return int returns 0 on failure to match the next char \n
+ * returns 1 otherwise
+ */
+static int match_char(Lexer* lexer, char expected) {
+    if (is_at_end(lexer)) return 0;
+    if (lexer->source[lexer->current] != expected) return 0;
+    lexer->current++;
+    return 1;
+}
+
+
 // --- Main Lexer Function ---
 
 /**
@@ -226,11 +246,19 @@ Token get_next_token(Lexer* lexer) {
         case '(': return make_token(lexer, TOKEN_LPAREN);
         case ')': return make_token(lexer, TOKEN_RPAREN);
         case ';': return make_token(lexer, TOKEN_SEMICOLON);
-        case '=': return make_token(lexer, TOKEN_EQUALS);
         case '+': return make_token(lexer, TOKEN_PLUS);
         case '-': return make_token(lexer, TOKEN_MINUS);
         case '*': return make_token(lexer, TOKEN_STAR);
         case '/': return make_token(lexer, TOKEN_SLASH);
+
+        case '!':
+            return make_token(lexer, match_char(lexer, '=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
+        case '=':
+            return make_token(lexer, match_char(lexer, '=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUALS);
+        case '<':
+            return make_token(lexer, match_char(lexer, '=') ? TOKEN_LESS_EQUAL : TOKEN_LESS);
+        case '>':
+            return make_token(lexer, match_char(lexer, '=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
     }
 
     // 5. If no rule matched, it's an unrecognized character.

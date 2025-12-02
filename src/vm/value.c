@@ -41,9 +41,24 @@ bool values_equal(Value a, Value b) {
         case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
         case VAL_INT:  return AS_INT(a) == AS_INT(b);
         case VAL_OBJ: {
-            // For now, simple pointer equality. 
-            // Later implement deep equality for strings.
-            return AS_OBJ(a) == AS_OBJ(b);
+            Obj* aObj = AS_OBJ(a);
+            Obj* bObj = AS_OBJ(b);
+            
+            // 1. Fast path: Same pointer = same object = equal
+            if (aObj == bObj) return true;
+
+            // 2. Deep compare for Strings
+            if (aObj->type == OBJ_STRING && bObj->type == OBJ_STRING) {
+                ObjString* aStr = (ObjString*)aObj;
+                ObjString* bStr = (ObjString*)bObj;
+                
+                // Compare lengths first (fast)
+                if (aStr->length != bStr->length) return false;
+                
+                // Compare contents (slower)
+                return memcmp(aStr->chars, bStr->chars, aStr->length) == 0;
+            }
+            return false; 
         }
         // case VAL_OBJ:
         default:       return false; // Should be unreachable

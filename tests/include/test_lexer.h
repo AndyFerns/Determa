@@ -21,4 +21,7 @@ void test_line_numbers();
 // A test to ensure whitespace and comments are skipped
 void test_whitespace_and_comments();
 
+// test to ensure boolean comparisons
+void test_lexer_booleans_comparisons();
+
 #endif // TEST_LEXER_H

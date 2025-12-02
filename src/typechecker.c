@@ -16,6 +16,7 @@
 #include "typechecker.h"
 #include "symbol.h"
 #include "ast.h"
+#include "token.h"
 
 #include <stdio.h>
 
@@ -68,7 +69,7 @@ static void error(TypeChecker* tc, const char* msg) {
 
 // Forward declarations
 static DataType check_expression(TypeChecker* tc, AstNode* expr);
-static void     check_statement(TypeChecker* tc, AstNode* stmt);
+static void check_statement(TypeChecker* tc, AstNode* stmt);
 
 /**
  * @brief Recursively checks the type of an expression AST node.
@@ -94,14 +95,31 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
         case NODE_STRING_LITERAL: 
             return TYPE_STRING;
 
+        case NODE_BOOL_LITERAL:
+            return TYPE_BOOL;
+
         case NODE_UNARY_OP: {
             AstNodeUnaryOp* n = (AstNodeUnaryOp*)expr;
             DataType type = check_expression(tc, n->operand);
-            if (type != TYPE_INT) {
-                error(tc, "Unary '-' only applies to numbers.");
-                return TYPE_ERROR;
+
+            // If operator type is '-'
+            if (n->op.type == TOKEN_MINUS) {
+                if (type != TYPE_INT) {
+                    error(tc, "Unary '-' only applies to numbers.");
+                    return TYPE_ERROR;
+                }
+                return TYPE_INT;
             }
-            return TYPE_INT;
+            
+            // if operator type is "!"
+            if (n->op.type == TOKEN_BANG) {
+                if (type != TYPE_BOOL) {
+                    error(tc, "Unary '!' only applies to booleans.");
+                    return TYPE_ERROR;
+                }
+                return TYPE_BOOL;
+            }
+            return TYPE_ERROR;
         }
 
         case NODE_VAR_ACCESS: {
@@ -129,15 +147,41 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
                 return TYPE_ERROR;
 
 
-            // INT + INT 
-            if (leftType == TYPE_INT && rightType == TYPE_INT)
-                return TYPE_INT;
-
-            // STRING + STRING (string concatenation)
-            if (op->op.type == TOKEN_PLUS) {
-                if (leftType == TYPE_STRING && rightType == TYPE_STRING) 
+            // Arithmetic
+            if (op->op.type == TOKEN_PLUS || op->op.type == TOKEN_MINUS ||
+                op->op.type == TOKEN_STAR || op->op.type == TOKEN_SLASH) {
+                
+                // Int Math
+                if (leftType == TYPE_INT && rightType == TYPE_INT) return TYPE_INT;
+                
+                // String Concat
+                if (op->op.type == TOKEN_PLUS && leftType == TYPE_STRING && rightType == TYPE_STRING) {
                     return TYPE_STRING;
+                }
+                
+                error(tc, "Arithmetic requires INTs (or STRINGs for +).");
+                return TYPE_ERROR;
             }
+
+            // --- Comparisons (Return BOOL) ---
+            if (op->op.type == TOKEN_GREATER || op->op.type == TOKEN_GREATER_EQUAL ||
+                op->op.type == TOKEN_LESS || op->op.type == TOKEN_LESS_EQUAL) {
+                
+                if (leftType == TYPE_INT && rightType == TYPE_INT) return TYPE_BOOL;
+                
+                error(tc, "Comparison operators require INT operands.");
+                return TYPE_ERROR;
+            }
+
+            // --- Equality (Return BOOL) ---
+            if (op->op.type == TOKEN_EQUAL_EQUAL || op->op.type == TOKEN_BANG_EQUAL) {
+                // We allow comparing any two matching types
+                if (leftType == rightType) return TYPE_BOOL;
+                
+                error(tc, "Cannot compare different types.");
+                return TYPE_ERROR;
+            }
+
 
             error(tc, "Type mismatch. Operations support INT (+-*/) or STRING (+ only).");
             return TYPE_ERROR;

@@ -49,6 +49,12 @@ static void print_ast_recursive(AstNode* node, int indent) {
             break;
         }
 
+        case NODE_BOOL_LITERAL: {
+            AstNodeBoolLiteral* n = (AstNodeBoolLiteral*)node;
+            printf("BOOL_LITERAL: %s\n", n->value ? "true" : "false");
+            break;
+        }
+
         case NODE_UNARY_OP: {
             AstNodeUnaryOp* n = (AstNodeUnaryOp*)node;
             printf("UNARY_OP: %s\n", token_type_to_string(n->op.type));
@@ -149,6 +155,16 @@ void free_ast(AstNode* node) {
          * ================================ */
         case NODE_STRING_LITERAL: {
             free(((AstNodeStringLiteral*)node)->value); // Free the string copy
+            break;
+        }
+
+
+        /* ================================
+         *  BOOL LITERAL
+         *  (No children)
+         *  // Nothing to free inside
+         * ================================ */
+        case NODE_BOOL_LITERAL: {
             break;
         }
         
@@ -373,6 +389,16 @@ AstNode* new_string_literal_node(char* value, int line) {
     AstNodeStringLiteral* node = (AstNodeStringLiteral*)malloc(sizeof(AstNodeStringLiteral));
     if (!node) return NULL;
     node->node.type = NODE_STRING_LITERAL;
+    node->node.line = line;
+    node->value = value;
+    return (AstNode*)node;
+}
+
+
+AstNode* new_bool_literal_node(int value, int line) {
+    AstNodeBoolLiteral* node = (AstNodeBoolLiteral*)malloc(sizeof(AstNodeBoolLiteral));
+    if (!node) return NULL;
+    node->node.type = NODE_BOOL_LITERAL;
     node->node.line = line;
     node->value = value;
     return (AstNode*)node;
