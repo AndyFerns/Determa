@@ -181,11 +181,19 @@ static AstNode* parse_primary(Parser* parser) {
 
     // --- String Literal Parsing ---
     if (check(parser, TOKEN_STRING)) {
-        // The token lexeme includes quotes: "hello"
-        // We want to strip them: hello
+
+        if (parser->current.length < 2) {
+            error_at_current(parser, "Invalid string literal");
+            advance(parser);
+            return NULL;
+        }
+
+        // strip the token lexemme of the " "
         int len = parser->current.length - 2; // -2 for quotes
         char* strVal = (char*)malloc(len + 1);
         // Copy starting from lexeme + 1 to skip opening quote
+        if (!strVal) { error_at_current(parser, "Out of memory"); return NULL; }
+        
         memcpy(strVal, parser->current.lexeme + 1, len);
         strVal[len] = '\0';
         
@@ -429,9 +437,25 @@ static AstNode* parse_block(Parser* parser) {
     AstNode* block = new_block_node(line);
     
     while (!check(parser, TOKEN_RIGHT_BRACE) && !check(parser, TOKEN_EOF)) {
-        AstNode* stmt = parse_declaration(parser);
-        if (stmt) block_add_statement(block, stmt);
+    AstNode* stmt = parse_declaration(parser);
+    if (stmt) {
+        block_add_statement(block, stmt);
+    } else {
+        if (parser->had_error) {
+            // recover: skip tokens until end of statement or end of block
+            while (!check(parser, TOKEN_EOF) &&
+                   !check(parser, TOKEN_SEMICOLON) &&
+                   !check(parser, TOKEN_RIGHT_BRACE)) {
+                advance(parser);
+            }
+            if (check(parser, TOKEN_SEMICOLON)) advance(parser);
+                parser->had_error = 0;
+            } else {
+                break;
+            }
+        }
     }
+
     
     consume(parser, TOKEN_RIGHT_BRACE, "Expected '}' after block.");
     TRACE_EXIT("Block");
@@ -558,6 +582,11 @@ AstNode* parse(const char* source, int pda_debug_mode) {
     Parser parser;
     parser.lexer = init_lexer(source);
     parser.had_error = 0;
+
+    // initialize tokens to safe defaults
+    parser.current = (Token){ .type = TOKEN_ERROR, .lexeme = NULL, .length = 0, .line = 0 };
+    parser.previous = (Token){ .type = TOKEN_ERROR, .lexeme = NULL, .length = 0, .line = 0 };
+
 
     // Load first token
     advance(&parser);
