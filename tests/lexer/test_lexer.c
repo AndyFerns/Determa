@@ -92,3 +92,20 @@ void test_whitespace_and_comments() {
     // The lexer should skip the final space
     check_token(get_next_token(&lexer), TOKEN_EOF, "", 2);
 }
+
+
+void test_lexer_booleans_comparisons() {
+    const char* source = "true false == != < <= > >=";
+    Lexer lexer = init_lexer(source);
+
+    check_token(get_next_token(&lexer), TOKEN_TRUE,          "true",  1);
+    check_token(get_next_token(&lexer), TOKEN_FALSE,         "false", 1);
+    check_token(get_next_token(&lexer), TOKEN_EQUAL_EQUAL,   "==",    1);
+    check_token(get_next_token(&lexer), TOKEN_BANG_EQUAL,    "!=",    1);
+    check_token(get_next_token(&lexer), TOKEN_LESS,          "<",     1);
+    check_token(get_next_token(&lexer), TOKEN_LESS_EQUAL,    "<=",    1);
+    check_token(get_next_token(&lexer), TOKEN_GREATER,       ">",     1);
+    check_token(get_next_token(&lexer), TOKEN_GREATER_EQUAL, ">=",    1);
+    
+    check_token(get_next_token(&lexer), TOKEN_EOF, "", 1);
+}
