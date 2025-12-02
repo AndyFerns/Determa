@@ -264,9 +264,42 @@ static void check_statement(TypeChecker* tc, AstNode* stmt) {
         case NODE_PROGRAM: {
             AstNodeProgram* prog = (AstNodeProgram*)stmt;
 
-            for (int i = 0; i < prog->statement_count; i++)
+            for (int i = 0; i < prog->statement_count; i++) {
                 check_statement(tc, prog->statements[i]);
+            }
+            break;
+        }
 
+        // --- Block Scoping ---
+        case NODE_BLOCK: {
+            AstNodeBlock* block = (AstNodeBlock*)stmt;
+            symbol_table_enter_scope(&tc->symbols); // PUSH SCOPE
+            for (int i = 0; i < block->statement_count; i++) {
+                check_statement(tc, block->statements[i]);
+            }
+            symbol_table_exit_scope(&tc->symbols);  // POP SCOPE
+            break;
+        }
+
+        // --- Control Flow ---
+        case NODE_IF: {
+            AstNodeIf* n = (AstNodeIf*)stmt;
+            DataType condType = check_expression(tc, n->condition);
+            if (condType != TYPE_BOOL) {
+                error(tc, "If condition must be a boolean.");
+            }
+            check_statement(tc, n->thenBranch);
+            if (n->elseBranch) check_statement(tc, n->elseBranch);
+            break;
+        }
+
+        case NODE_WHILE: {
+            AstNodeWhile* n = (AstNodeWhile*)stmt;
+            DataType condType = check_expression(tc, n->condition);
+            if (condType != TYPE_BOOL) {
+                error(tc, "While condition must be a boolean.");
+            }
+            check_statement(tc, n->body);
             break;
         }
 

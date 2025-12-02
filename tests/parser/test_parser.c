@@ -233,3 +233,53 @@ void test_parser_logic_precedence() {
 
     free_ast(root);
 }
+
+
+void test_parser_block() {
+    const char* source = "{ var x = 1; }";
+    AstNode* root = parse(source, 0);
+    
+    AstNodeProgram* prog = (AstNodeProgram*)root;
+    CHECK(prog->statement_count == 1, "Program has 1 statement");
+    
+    AstNode* stmt = prog->statements[0];
+    CHECK(stmt->type == NODE_BLOCK, "Statement is BLOCK");
+    
+    AstNodeBlock* block = (AstNodeBlock*)stmt;
+    CHECK(block->statement_count == 1, "Block has 1 inner statement");
+    CHECK(block->statements[0]->type == NODE_VAR_DECL, "Inner statement is VAR_DECL");
+    
+    free_ast(root);
+}
+
+void test_parser_if() {
+    // Note: No parens around condition!
+    const char* source = "if true { print 1; } else { print 2; }";
+    AstNode* root = parse(source, 0);
+    
+    AstNodeProgram* prog = (AstNodeProgram*)root;
+    AstNode* stmt = prog->statements[0];
+    CHECK(stmt->type == NODE_IF, "Statement is IF");
+    
+    AstNodeIf* ifNode = (AstNodeIf*)stmt;
+    CHECK(ifNode->condition->type == NODE_BOOL_LITERAL, "Condition is BOOL");
+    CHECK(ifNode->thenBranch->type == NODE_BLOCK, "Then branch is BLOCK");
+    CHECK(ifNode->elseBranch->type == NODE_BLOCK, "Else branch is BLOCK");
+    
+    free_ast(root);
+}
+
+void test_parser_while() {
+    const char* source = "while x < 10 { print x; }";
+    AstNode* root = parse(source, 0);
+    
+    AstNodeProgram* prog = (AstNodeProgram*)root;
+    AstNode* stmt = prog->statements[0];
+    CHECK(stmt->type == NODE_WHILE, "Statement is WHILE");
+    
+    AstNodeWhile* whileNode = (AstNodeWhile*)stmt;
+    CHECK(whileNode->condition->type == NODE_BINARY_OP, "Condition is BINARY_OP (<)");
+    CHECK(whileNode->body->type == NODE_BLOCK, "Body is BLOCK");
+    
+    free_ast(root);
+}

@@ -155,6 +155,10 @@ static InterpretResult run() {
     #define READ_BYTE() (*ip++)
     #define READ_CONSTANT() (constants[READ_BYTE()])
 
+    // Macro to Read 16-bit operand (Big Endian)
+    #define READ_SHORT() \
+        (ip += 2, (uint16_t)((ip[-2] << 8) | ip[-1]))
+
     // PEEK macro to use local stackTop
     #define PEEK(distance) (stackTop[-1 - distance])
 
@@ -220,7 +224,39 @@ static InterpretResult run() {
             // Conditional and equivalance logic;
             case OP_TRUE:  *stackTop++ = BOOL_VAL(true); break;
             case OP_FALSE: *stackTop++ = BOOL_VAL(false); break;
-            
+
+            // --- Stack Cleanup ---
+            case OP_POP: {
+                stackTop--; 
+                break;
+            }
+
+            // --- Control Flow ---
+            case OP_JUMP: {
+                uint16_t offset = READ_SHORT();
+                ip += offset;
+                break;
+            }
+
+            case OP_JUMP_IF_FALSE: {
+                uint16_t offset = READ_SHORT();
+                // Peek at condition (don't pop yet, usually handled by compiler emitting pop)
+                Value condition = PEEK(0);
+                // False is falsey. Everything else is truthy.
+                // If false, jump. If true, fall through (and let next instruction execute).
+                if (IS_BOOL(condition) && !AS_BOOL(condition)) {
+                    ip += offset;
+                }
+                break;
+            }
+
+            case OP_LOOP: {
+                uint16_t offset = READ_SHORT();
+                ip -= offset; // Jump BACKWARDS
+                break;
+            }
+
+            // --- Conditional Ops ---
             case OP_EQUAL: {
                 Value b = *(--stackTop);
                 Value a = *(--stackTop);
@@ -346,6 +382,8 @@ static InterpretResult run() {
         }
     }
 
+    #undef READ_BYTE
+    #undef READ_SHORT
     #undef READ_BYTE
     #undef READ_CONSTANT
     #undef BINARY_OP

@@ -48,6 +48,8 @@ const char* token_type_to_string(TokenType type) {
         // Single-Character tokens
         case TOKEN_LPAREN:    return "TOKEN_LPAREN";
         case TOKEN_RPAREN:    return "TOKEN_RPAREN";
+        case TOKEN_LEFT_BRACE:  return "TOKEN_LEFT_BRACE";
+        case TOKEN_RIGHT_BRACE: return "TOKEN_RIGHT_BRACE"; 
 
         // Arithmetic Operators and Assignment
         case TOKEN_PLUS:      return "TOKEN_PLUS";
@@ -75,10 +77,15 @@ const char* token_type_to_string(TokenType type) {
         // Keywords
         case TOKEN_VAR:       return "TOKEN_VAR";
         case TOKEN_PRINT:     return "TOKEN_PRINT";
+        case TOKEN_IF:          return "TOKEN_IF";    
+        case TOKEN_ELIF:        return "TOKEN_ELIF";  
+        case TOKEN_ELSE:        return "TOKEN_ELSE";  
+        case TOKEN_WHILE:       return "TOKEN_WHILE"; 
 
         // Control Tokens
         case TOKEN_ERROR:     return "TOKEN_ERROR";
         case TOKEN_EOF:       return "TOKEN_EOF";
+        
         default:              return "TOKEN_UNKNOWN";
     }
 }

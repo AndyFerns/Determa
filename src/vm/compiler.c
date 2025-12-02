@@ -88,6 +88,14 @@ static void emit_byte(Compiler* compiler, uint8_t byte, int line) {
 }
 
 /**
+ * @brief Function to Emit two bytes (used for jump offsets)
+ */
+static void emit_bytes(Compiler* compiler, uint8_t byte1, uint8_t byte2, int line) {
+    emit_byte(compiler, byte1, line);
+    emit_byte(compiler, byte2, line);
+}
+
+/**
  * @brief Emits an OpCode followed by a constant index.
  */
 static void emit_constant(Compiler* compiler, Value value, int line) {
@@ -110,6 +118,60 @@ static void emit_constant(Compiler* compiler, Value value, int line) {
     emit_byte(compiler, OP_CONSTANT, line);
     // Note: We currently assume the constant index fits in a single byte (max 256 constants)
     emit_byte(compiler, (uint8_t)constantIndex, line); 
+}
+
+
+/**
+ * @brief Emit a jump instruction with a placeholder operand. 
+ * 
+ * @param compiler 
+ * @param instruction 
+ * @param line 
+ * @return int The index of the placeholder so we can patch it later.
+ */
+static int emit_jump(Compiler* compiler, uint8_t instruction, int line) {
+    emit_byte(compiler, instruction, line);
+    emit_bytes(compiler, 0xff, 0xff, line); // helper to emit 2 placeholder bytes
+    return compiler->chunk->count - 2;
+}
+
+
+/**
+ * @brief Function to Go back to 'offset' and write the jump distance to current location
+ * 
+ * @param compiler 
+ * @param offset 
+ */
+static void patch_jump(Compiler* compiler, int offset) {
+    // -2 to adjust for the jump offset itself
+    int jump = compiler->chunk->count - offset - 2;
+
+    if (jump > UINT16_MAX) {
+        fprintf(stderr, "Too much code to jump over.\n");
+        compiler->hadError = 1;
+    }
+
+    compiler->chunk->code[offset] = (jump >> 8) & 0xff;
+    compiler->chunk->code[offset + 1] = jump & 0xff;
+}
+
+/**
+ * @brief Emit a backward jump loop (used in While conditional blocks)
+ * 
+ * @param compiler 
+ * @param loopStart 
+ * @param line 
+ */
+static void emit_loop(Compiler* compiler, int loopStart, int line) {
+    emit_byte(compiler, OP_LOOP, line);
+
+    int offset = compiler->chunk->count - loopStart + 2;
+    if (offset > UINT16_MAX) {
+        fprintf(stderr, "Loop body too large.\n");
+        compiler->hadError = 1;
+    }
+
+    emit_bytes(compiler, (offset >> 8) & 0xff, offset & 0xff, line); // helper to clear two offsets
 }
 
 /**
@@ -287,6 +349,69 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
     if (compiler->hadError || stmt == NULL) return;
 
     switch (stmt->type) {
+        // --- Block ---
+        case NODE_BLOCK: {
+            AstNodeBlock* block = (AstNodeBlock*)stmt;
+            for (int i = 0; i < block->statement_count; i++) {
+                compile_statement(compiler, block->statements[i]);
+            }
+            break;
+        }
+
+        // --- If Statement ---
+        case NODE_IF: {
+            AstNodeIf* n = (AstNodeIf*)stmt;
+            // 1. Compile Condition
+            compile_expression(compiler, n->condition);
+            
+            // 2. Jump over "then" if false
+            int thenJump = emit_jump(compiler, OP_JUMP_IF_FALSE, n->node.line);
+            emit_byte(compiler, OP_POP, n->node.line); // Clean up condition if true
+            
+            // 3. Compile "then" block
+            compile_statement(compiler, n->thenBranch);
+            
+            // 4. Jump over "else"
+            int elseJump = emit_jump(compiler, OP_JUMP, n->node.line);
+            
+            // 5. Patch start of "else" (target of thenJump)
+            patch_jump(compiler, thenJump);
+            emit_byte(compiler, OP_POP, n->node.line); // Clean up condition if false (jump landed here)
+            
+            // 6. Compile "else" block (if exists)
+            if (n->elseBranch) {
+                compile_statement(compiler, n->elseBranch);
+            }
+            
+            // 7. Patch end of if (target of elseJump)
+            patch_jump(compiler, elseJump);
+            break;
+        }
+
+        // --- While Loop ---
+        case NODE_WHILE: {
+            AstNodeWhile* n = (AstNodeWhile*)stmt;
+            int loopStart = compiler->chunk->count; // Mark start of loop
+            
+            // 1. Condition
+            compile_expression(compiler, n->condition);
+            
+            // 2. Jump out if false
+            int exitJump = emit_jump(compiler, OP_JUMP_IF_FALSE, n->node.line);
+            emit_byte(compiler, OP_POP, n->node.line); // Clean up condition if true
+            
+            // 3. Body
+            compile_statement(compiler, n->body);
+            
+            // 4. Loop back
+            emit_loop(compiler, loopStart, n->node.line);
+            
+            // 5. Patch exit
+            patch_jump(compiler, exitJump);
+            emit_byte(compiler, OP_POP, n->node.line); // Clean up condition if false
+            break;
+        }
+
         case NODE_VAR_DECL: {
             AstNodeVarDecl* n = (AstNodeVarDecl*)stmt;
             
@@ -318,11 +443,8 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
         case NODE_EXPR_STMT: {
             AstNodeExprStmt* n = (AstNodeExprStmt*)stmt;
             compile_expression(compiler, n->expression);
-            if (compiler->hadError) return;
-            // Pop the resulting value of the expression, since it's a statement
-            // TODO: Emit OP_POP
-            // emit_byte(compiler, OP_POP, n->node.line;
-
+            // Expression as statement should pop its value
+            emit_byte(compiler, OP_POP, n->node.line); 
             break;
         }
 

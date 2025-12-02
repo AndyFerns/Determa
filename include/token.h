@@ -26,6 +26,8 @@ typedef enum {
     // Single-character tokens
     TOKEN_LPAREN,     // (
     TOKEN_RPAREN,     // )
+    TOKEN_LEFT_BRACE, // { 
+    TOKEN_RIGHT_BRACE,// }
 
     // Arithmetic Operators 
     TOKEN_PLUS,       // +
@@ -54,6 +56,10 @@ typedef enum {
     TOKEN_PRINT,      // print
     TOKEN_TRUE,       // true
     TOKEN_FALSE,      // false
+    TOKEN_IF,         // if
+    TOKEN_ELIF,       // elif
+    TOKEN_ELSE,       // else
+    TOKEN_WHILE,      //while
 
     // Control tokens
     TOKEN_ERROR,      // Represents a lexing error

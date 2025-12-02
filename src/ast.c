@@ -37,6 +37,15 @@ static void print_ast_recursive(AstNode* node, int indent) {
             break;
         }
 
+        case NODE_BLOCK: {
+            AstNodeBlock* b = (AstNodeBlock*)node;
+            printf("BLOCK (%d statements)\n", b->statement_count);
+            for (int i = 0; i < b->statement_count; i++) {
+                print_ast_recursive(b->statements[i], indent + 2);
+            }
+            break;
+        }
+
         case NODE_INT_LITERAL: {
             AstNodeIntLiteral* n = (AstNodeIntLiteral*)node;
             printf("INT_LITERAL: %d\n", n->value);
@@ -96,6 +105,29 @@ static void print_ast_recursive(AstNode* node, int indent) {
             print_ast_recursive(n->expression, indent + 2);
             break;
         }
+
+        case NODE_IF: {
+            AstNodeIf* n = (AstNodeIf*)node;
+            printf("IF\n");
+            print_ast_recursive(n->condition, indent + 2);
+            printf("%*sTHEN:\n", indent + 2, "");
+            print_ast_recursive(n->thenBranch, indent + 4);
+            if (n->elseBranch) {
+                printf("%*sELSE:\n", indent + 2, "");
+                print_ast_recursive(n->elseBranch, indent + 4);
+            }
+            break;
+        }
+
+        case NODE_WHILE: {
+            AstNodeWhile* n = (AstNodeWhile*)node;
+            printf("WHILE\n");
+            print_ast_recursive(n->condition, indent + 2);
+            printf("%*sDO:\n", indent + 2, "");
+            print_ast_recursive(n->body, indent + 4);
+            break;
+        }
+        
         // add more cases as the AST node implementation grows
         default:
             printf("UNKNOWN_NODE\n");
@@ -138,6 +170,19 @@ void free_ast(AstNode* node) {
             free(prog->statements);
             break;
         }
+
+
+        /* ================================
+         *  BLOCK OF STATEMENTS
+         *  recursively walk down the ast and free each subsequent statement
+         * ================================ */
+        case NODE_BLOCK: {
+            AstNodeBlock* b = (AstNodeBlock*)node;
+            for (int i = 0; i < b->statement_count; i++) free_ast(b->statements[i]);
+            free(b->statements);
+            break;
+        }
+
 
         /* ================================
          *  INTEGER LITERAL
@@ -230,6 +275,30 @@ void free_ast(AstNode* node) {
             break;
         }
 
+        /* ================================
+         *  IF CONDITIONAL BLOCK
+         *  recursively free the condition, 
+         *  'then' branch and 'else' branch
+         * ================================ */
+        case NODE_IF: {
+            AstNodeIf* n = (AstNodeIf*)node;
+            free_ast(n->condition);
+            free_ast(n->thenBranch);
+            free_ast(n->elseBranch);
+            break;
+        }
+
+        /* ================================
+         *  WHILE CONDITIONAL BLOCK
+         *  recursively free the condition and the body statements
+         * ================================ */
+        case NODE_WHILE: {
+            AstNodeWhile* n = (AstNodeWhile*)node;
+            free_ast(n->condition);
+            free_ast(n->body);
+            break;
+        }
+
         // We will add more cases here
         default:
             // No-op
@@ -309,6 +378,42 @@ void program_add_statement(AstNode* program_node, AstNode* statement) {
     }
 
     p->statements[p->statement_count++] = statement;
+}
+
+
+
+/**
+ * @brief Stores a block as a list of statements
+ * 
+ * statements are enclosed in { ... } and under a "node block"
+ * 
+ * @param line 
+ * @return AstNode* 
+ */
+AstNode* new_block_node(int line) {
+    AstNodeBlock* node = (AstNodeBlock*)malloc(sizeof(AstNodeBlock));
+    if (!node) return NULL;
+    node->node.type = NODE_BLOCK;
+    node->node.line = line;
+    node->statement_count = 0;
+    node->capacity = 4;
+    node->statements = (AstNode**)malloc(sizeof(AstNode*) * node->capacity);
+    return (AstNode*)node;
+}
+
+/**
+ * @brief helper function to add a statement to a given block
+ * 
+ * @param block_node Pointer to the ast block node
+ * @param statement pointer to the statement node to be added to the block
+ */
+void block_add_statement(AstNode* block_node, AstNode* statement) {
+    AstNodeBlock* b = (AstNodeBlock*)block_node;
+    if (b->statement_count >= b->capacity) {
+        b->capacity *= 2;
+        b->statements = (AstNode**)realloc(b->statements, sizeof(AstNode*) * b->capacity);
+    }
+    b->statements[b->statement_count++] = statement;
 }
 
 /**
@@ -457,5 +562,43 @@ AstNode* new_var_assign_node(Token name, AstNode* expression, int line) {
     node->name = name;
     node->expression = expression;
 
+    return (AstNode*)node;
+}
+
+/**
+ * @brief Creates a new IF conditional branching node
+ * 
+ * @param condition 
+ * @param thenBranch 
+ * @param elseBranch 
+ * @param line 
+ * @return AstNode* 
+ */
+AstNode* new_if_node(AstNode* condition, AstNode* thenBranch, AstNode* elseBranch, int line) {
+    AstNodeIf* node = (AstNodeIf*)malloc(sizeof(AstNodeIf));
+    if (!node) return NULL;
+    node->node.type = NODE_IF;
+    node->node.line = line;
+    node->condition = condition;
+    node->thenBranch = thenBranch;
+    node->elseBranch = elseBranch;
+    return (AstNode*)node;
+}
+
+/**
+ * @brief Function to create a new WHILE condition node
+ * 
+ * @param condition 
+ * @param body 
+ * @param line 
+ * @return AstNode* 
+ */
+AstNode* new_while_node(AstNode* condition, AstNode* body, int line) {
+    AstNodeWhile* node = (AstNodeWhile*)malloc(sizeof(AstNodeWhile));
+    if (!node) return NULL;
+    node->node.type = NODE_WHILE;
+    node->node.line = line;
+    node->condition = condition;
+    node->body = body;
     return (AstNode*)node;
 }

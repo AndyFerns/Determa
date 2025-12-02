@@ -14,6 +14,7 @@
  * 
  */
 #include "lexer.h"
+#include "token.h"
 
 #include <string.h> // For memcmp, strlen
 #include <ctype.h>  // For isalpha, isdigit
@@ -127,11 +128,11 @@ static TokenType check_keyword(Lexer* lexer, int start, int length,
 }
 
 /**
- * @brief Reads the rest of an identifier.
+ * @brief Reads the rest of an identifier. 
+ * 
+ * This is a simple state machine (a "Trie") for checking keywords.
  */
 static TokenType identifier_type(Lexer* lexer) {
-    // This is a simple state machine (a "Trie")
-    // for checking keywords.
     switch (lexer->source[lexer->start]) {
         case 'p':
             return check_keyword(lexer, 1, 4, "rint", TOKEN_PRINT);
@@ -141,6 +142,26 @@ static TokenType identifier_type(Lexer* lexer) {
             return check_keyword(lexer, 1, 3, "rue", TOKEN_TRUE);
         case 'f':
             return check_keyword(lexer, 1, 4, "alse", TOKEN_FALSE);
+        
+        case 'i':
+            return check_keyword(lexer, 1, 1, "f", TOKEN_IF);
+        
+        case 'e': {
+            int length = lexer->current - lexer->start;
+            if (length == 4) {
+                if (memcmp(lexer->source + lexer->start, "elif", 4) == 0) {
+                    return TOKEN_ELIF;
+                }
+                if (memcmp(lexer->source + lexer->start, "else", 4) == 0) {
+                    return TOKEN_ELSE;
+                }
+            }
+            return TOKEN_ID;
+        }
+        
+        case 'w':
+            return check_keyword(lexer, 1, 4, "hile", TOKEN_WHILE);
+        
     }
     return TOKEN_ID; // Default to identifier
 }
@@ -181,6 +202,7 @@ static Token string(Lexer* lexer) {
     }
 
     if (is_at_end(lexer)) {
+        advance(lexer);
         return error_token(lexer, "Unterminated string.");
     }
 
@@ -245,6 +267,9 @@ Token get_next_token(Lexer* lexer) {
     switch (c) {
         case '(': return make_token(lexer, TOKEN_LPAREN);
         case ')': return make_token(lexer, TOKEN_RPAREN);
+        case '{': return make_token(lexer, TOKEN_LEFT_BRACE);  
+        case '}': return make_token(lexer, TOKEN_RIGHT_BRACE); 
+
         case ';': return make_token(lexer, TOKEN_SEMICOLON);
         case '+': return make_token(lexer, TOKEN_PLUS);
         case '-': return make_token(lexer, TOKEN_MINUS);
