@@ -41,8 +41,13 @@ void test_parser_print_statement();
  */
 void test_parser_program();
 
-// --- NEW TESTS (Phase 6) ---
+// --- (Phase 6) ---
 void test_parser_bool_literals();
 void test_parser_logic_precedence();
+
+// --- Phase 7 testtcases ---
+void test_parser_block();
+void test_parser_if();
+void test_parser_while();
 
 #endif // TEST_PARSER_H
