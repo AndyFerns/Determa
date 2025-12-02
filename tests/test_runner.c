@@ -57,6 +57,10 @@ int main(int argc, char* argv[]) {
     printf("\n");
     test_gc_suite();
 
+    // --- NEW: Phase 6 Tests ---
+    run_test(test_parser_bool_literals, "Parser - Bool Literals");
+    run_test(test_parser_logic_precedence, "Parser - Logic Precedence");
+
     // --- Add more tests here as we build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");
 
