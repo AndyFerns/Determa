@@ -92,6 +92,13 @@ static void print_ast_recursive(AstNode* node, int indent) {
             break;
         }
 
+        case NODE_VAR_ASSIGN: {
+            AstNodeVarAssign* n = (AstNodeVarAssign*)node;
+            printf("VAR_ASSIGN: %.*s\n", n->name.length, n->name.lexeme);
+            print_ast_recursive(n->expression, indent + 2);
+            break;
+        }
+
         case NODE_PRINT_STMT: {
             AstNodePrintStmt* n = (AstNodePrintStmt*)node;
             printf("PRINT_STMT\n");
@@ -242,7 +249,7 @@ void free_ast(AstNode* node) {
          * ================================ */
         case NODE_VAR_ASSIGN: {
             AstNodeVarAssign* assign = (AstNodeVarAssign*)node;
-            free_ast(assign->expression);
+            free_ast(((AstNodeVarAssign*)node)->expression);
             break;
         }
 
