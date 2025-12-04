@@ -249,7 +249,7 @@ void free_ast(AstNode* node) {
          * ================================ */
         case NODE_VAR_ASSIGN: {
             AstNodeVarAssign* assign = (AstNodeVarAssign*)node;
-            free_ast(((AstNodeVarAssign*)node)->expression);
+            free_ast(assign->expression);
             break;
         }
 
