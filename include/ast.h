@@ -153,8 +153,8 @@ typedef struct {
  */
 typedef struct {
     AstNode node;      // Base "class"
-    Token name;        // The identifier token for the variable
-    AstNode* expression;
+    Token name;        // The identifier token for the variable being updated
+    AstNode* expression;// the new value
 } AstNodeVarAssign;
 
 /**
