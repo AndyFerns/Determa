@@ -53,6 +53,7 @@ typedef struct {
 } Parser;
 
 // --- Forward Declarations for recursive functions ---
+static AstNode* parse_assignment(Parser* parser);
 static AstNode* parse_expression(Parser* parser);
 static AstNode* parse_equality(Parser* parser);
 static AstNode* parse_comparison(Parser* parser);
@@ -301,8 +302,8 @@ static AstNode* parse_term(Parser* parser) {
  */
 static AstNode* parse_expression(Parser* parser) {
     TRACE_ENTER("Expression");
-    // Start at the lowest precedence (Equality)
-    AstNode* node = parse_equality(parser);
+    // Start at the lowest precedence (Assignment)
+    AstNode* node = parse_assignment(parser);
     TRACE_EXIT("Expression");
     return node;
 }
@@ -421,6 +422,43 @@ static AstNode* parse_declaration(Parser* parser) {
     AstNode* stmt = parse_statement(parser);
     TRACE_EXIT("Declaration (Stmt)");
     return stmt;
+}
+
+
+/**
+ * @brief Parses Assignment logic when encountered
+ * 
+ * Rule: assignment -> IDENTIFIER "=" assignment | equality 
+ * 
+ * @param parser 
+ * @return AstNode* 
+ */
+static AstNode* parse_assignment(Parser* parser) {
+    // 1. Parse the left side as an expression (likely a VarAccess)
+    // We call the next level down (Equality)
+    AstNode* expr = parse_equality(parser);
+
+    // 2. Look for the '=' operator
+    if (match(parser, (TokenType[]){TOKEN_EQUALS}, 1)) {
+        Token equals = parser->previous;
+        
+        // 3. Recursively parse the right side (allows chaining a = b = 1)
+        AstNode* value = parse_assignment(parser);
+
+        // 4. Verify the left side is a valid assignment target
+        // For now, the only valid target is a variable name (VAR_ACCESS node)
+        if (expr->type == NODE_VAR_ACCESS) {
+            Token name = ((AstNodeVarAccess*)expr)->name;
+            // Transformation: We discard the VarAccess node and create a VarAssign node
+            // Note: In a robust compiler we'd free 'expr' here to avoid a tiny memory leak during parsing
+            free(expr); 
+            return new_var_assign_node(name, value, equals.line);
+        }
+
+        error_at_current(parser, "Invalid assignment target.");
+    }
+
+    return expr;
 }
 
 
