@@ -271,14 +271,14 @@ Token get_next_token(Lexer* lexer) {
         case '}': return make_token(lexer, TOKEN_RIGHT_BRACE); 
 
         case ';': return make_token(lexer, TOKEN_SEMICOLON);
-        case '+': return make_token(lexer, TOKEN_PLUS);
-        case '-': return make_token(lexer, TOKEN_MINUS);
-        case '*': return make_token(lexer, TOKEN_STAR);
-        case '/': return make_token(lexer, TOKEN_SLASH);
-        
-        case '%': 
-            return make_token(lexer, match_char(lexer, '=') ? TOKEN_PERCENT_EQUAL : TOKEN_PERCENT);
 
+        // Using match_char to peek next char and consume if match
+        case '+': return make_token(lexer, match_char(lexer, '=') ? TOKEN_PLUS_EQUAL : TOKEN_PLUS);
+        case '-': return make_token(lexer, match_char(lexer, '=') ? TOKEN_MINUS_EQUAL : TOKEN_MINUS);
+        case '*': return make_token(lexer, match_char(lexer, '=') ? TOKEN_STAR_EQUAL : TOKEN_STAR);
+        case '/': return make_token(lexer, match_char(lexer, '=') ? TOKEN_SLASH_EQUAL : TOKEN_SLASH);
+        case '%': return make_token(lexer, match_char(lexer, '=') ? TOKEN_PERCENT_EQUAL : TOKEN_PERCENT);
+        
         case '!':
             return make_token(lexer, match_char(lexer, '=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
         case '=':
