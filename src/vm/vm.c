@@ -219,6 +219,19 @@ static InterpretResult run() {
                 break;
             }
 
+            case OP_GET_LOCAL: {
+                uint8_t slot = READ_BYTE(); //Access the stack directly at the given index
+                push(vm.stack[slot]); // TODO: relative to frame addressing
+                break;
+            }
+
+            case OP_SET_LOCAL: {
+                uint8_t slot = READ_BYTE();
+                // Assignment = Expression hence we peek the stack
+                vm.stack[slot] = peek(0);
+                break;
+            }
+
             // Conditional and equivalance logic;
             case OP_TRUE:  *stackTop++ = BOOL_VAL(true); break;
             case OP_FALSE: *stackTop++ = BOOL_VAL(false); break;
