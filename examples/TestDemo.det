@@ -1,0 +1,138 @@
+// ============================================================
+// 🌲 Determa v0.2 'Cedar' Feature Showcase
+// ============================================================
+// This script demonstrates the syntax and capabilities of the
+// Determa programming language.
+//
+// Run this file: determa TestDemo.det
+// ============================================================
+
+print "--- 1. Data Types & Variables ---";
+
+var number = 42;            // Integer
+var is_active = true;       // Boolean
+var greeting = "Hello";     // String
+
+print "Integer:";
+print number;
+
+print "Boolean:";
+print is_active;
+
+print "String:";
+print greeting;
+
+print ""; // Newline
+
+// ============================================================
+
+print "--- 2. Arithmetic & Modulo ---";
+
+var a = 10;
+var b = 3;
+
+// Standard Math
+print "10 + 3 =";
+print a + b;
+
+print "10 * 3 =";
+print a * b;
+
+// Modulo Operator (%)
+print "10 % 3 =";
+print a % b;
+
+// Precedence Check: (10 + 2) * 3 vs 10 + 2 * 3
+print "Order of Operations (10 + 2 * 3):";
+print 10 + 2 * 3; // Should be 16
+
+print "";
+
+// ============================================================
+
+print "--- 3. Logic & Comparisons ---";
+
+var x = 100;
+var y = 200;
+
+print "Is 100 < 200?";
+print x < y; // true
+
+print "Is 100 == 100?";
+print x == 100; // true
+
+print "Is 100 != 200?";
+print x != y; // true
+
+print "Logical NOT (!true):";
+print !true; // false
+
+print "";
+
+// ============================================================
+
+print "--- 4. Control Flow (Branching) ---";
+
+var score = 85;
+
+// Determa syntax: No parentheses required, braces mandatory.
+if score >= 90 {
+    print "Rank: A";
+} 
+elif score >= 80 {
+    print "Rank: B";
+} 
+else {
+    print "Rank: C";
+}
+
+print "";
+
+// ============================================================
+
+print "--- 5. Loops & Compound Assignment ---";
+
+var counter = 0;
+print "Counting to 5 using While Loop:";
+
+while counter < 5 {
+    counter += 1; // Compound Assignment (Desugared to counter = counter + 1)
+    print counter;
+}
+
+print "";
+
+// ============================================================
+
+print "--- 6. String Manipulation ---";
+
+var part1 = "Determa ";
+var part2 = "Language";
+
+// String Concatenation
+var combined = part1 + part2;
+print combined;
+
+print "";
+
+// ============================================================
+
+print "--- 7. Scoping (Block Scope) ---";
+
+var global_var = "I am global";
+
+if true {
+    var local_var = "I am local";
+    print global_var;
+    print local_var;
+    
+    // Shadowing check (if supported by current build, otherwise acts as update)
+    var global_var = "Shadowed inside block";
+    print global_var;
+}
+
+print "Back to global scope:";
+print global_var; // Should print "I am global" if scoping is strictly local
+
+print "";
+print "=== End of Demo ===";
