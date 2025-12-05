@@ -33,13 +33,11 @@ typedef enum {
     OP_LESS,         // <
 
     // --- Variables ---
-    // Operand: [1 byte index]
-    // Action: Push globals[index] onto stack
-    OP_GET_GLOBAL, 
-    
-    // Operand: [1 byte index]
-    // Action: Pop stack, store in globals[index]
-    OP_SET_GLOBAL,
+    OP_GET_GLOBAL,      // Operand: [1 byte index] Action: Push globals[index] onto stack
+    OP_SET_GLOBAL,      // Operand: [1 byte index] Action: Pop stack, store in globals[index]
+
+    OP_GET_LOCAL,       // Operand: [1 byte index] Action: Push value from stack[index]
+    OP_SET_LOCAL,       // Operand: [1 byte index] Action: Store top of stack into stack[index] (Peek, don't pop)
 
     // --- Control Flow (NEW) ---
     OP_POP,           // Pop top value (cleanup)
