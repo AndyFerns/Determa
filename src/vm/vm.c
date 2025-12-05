@@ -212,11 +212,9 @@ static InterpretResult run() {
 
             case OP_SET_GLOBAL: {
                 uint8_t index = READ_BYTE();
-                // In C: x = 10 evaluates to 10. 
-                // We peek the value so it stays on stack (for expressions like a = b = 10)
-                // But for simple VarDecl statements, the compiler will emit POP later.
-                // For our current simple compiler, let's POP it to be safe for statements.
-                Value val = *(--stackTop);
+                // Assignment expressions evaluate to the assigned value.
+                // We PEEK the value so it stays on the stack for usage.
+                Value val = PEEK(0); 
                 vm.globals[index] = val;
                 break;
             }
