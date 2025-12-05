@@ -352,6 +352,24 @@ static InterpretResult run() {
                 break;
             }
 
+            case OP_MODULO: {
+                if (!IS_INT(PEEK(0)) || !IS_INT(PEEK(1))) {
+                    vm.ip = ip; vm.stackTop = stackTop;
+                    runtimeError("Operands must be numbers.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                int b = AS_INT(PEEK(0)); 
+                if (b == 0) {
+                    vm.ip = ip; vm.stackTop = stackTop;
+                    runtimeError("Modulo by zero.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                int b_val = AS_INT(*(--stackTop));
+                int a_val = AS_INT(*(--stackTop));
+                *stackTop++ = INT_VAL(a_val % b_val);
+                break;
+            }
+
             case OP_NEGATE: {
                 if (!IS_INT(stackTop[-1])) {
                     vm.ip = ip; vm.stackTop = stackTop;
