@@ -34,6 +34,7 @@ typedef enum {
     TOKEN_MINUS,      // -
     TOKEN_STAR,       // *
     TOKEN_SLASH,      // /
+    TOKEN_PERCENT,    // %
     TOKEN_SEMICOLON,  // ;
     TOKEN_EQUALS,     // = (assignment)
 
@@ -50,6 +51,13 @@ typedef enum {
     TOKEN_INT,        // 123
     TOKEN_ID,         // x, my_var
     TOKEN_STRING,     // "hello", 'world'
+
+    // Compound Assignment 
+    TOKEN_PLUS_EQUAL,    // +=
+    TOKEN_MINUS_EQUAL,   // -=
+    TOKEN_STAR_EQUAL,    // *=
+    TOKEN_SLASH_EQUAL,   // /=
+    TOKEN_PERCENT_EQUAL, // %=
 
     // Keywords
     TOKEN_VAR,        // var
