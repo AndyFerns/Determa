@@ -373,38 +373,46 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
         case NODE_VAR_ACCESS: {
             AstNodeVarAccess* n = (AstNodeVarAccess*)expr;
             
-            // 1. Look up the index
-            int index = resolve_global(compiler, n->name);
-            if (index == -1) {
-                // This should have been caught by TypeChecker, but safety first
-                fprintf(stderr, "Compiler Error: Undefined variable '%.*s'\n", n->name.length, n->name.lexeme);
-                compiler->hadError = 1;
-                return;
+            // Try resolving as local first
+            int arg = resolve_local(compiler, n->name);
+            if (arg != -1) {
+                emit_byte(compiler, OP_GET_LOCAL, n->node.line);
+                emit_byte(compiler, (uint8_t)arg, n->node.line);
+            } else {
+                // Fallback to global
+                arg = resolve_global(compiler, n->name);
+                if (arg != -1) {
+                    emit_byte(compiler, OP_GET_GLOBAL, n->node.line);
+                    emit_byte(compiler, (uint8_t)arg, n->node.line);
+                } else {
+                    fprintf(stderr, "Compiler Error: Undefined variable '%.*s'\n", n->name.length, n->name.lexeme);
+                    compiler->hadError = 1;
+                }
             }
-            
-            // 2. Emit OP_GET_GLOBAL [INDEX]
-            emit_byte(compiler, OP_GET_GLOBAL, n->node.line);
-            emit_byte(compiler, (uint8_t)index, n->node.line);
+
             break;
         }
 
         case NODE_VAR_ASSIGN: {
             AstNodeVarAssign* n = (AstNodeVarAssign*)expr;
-
-            // 1. Compile the value (Pushes result to stack)
+            
             compile_expression(compiler, n->expression);
             
-            // 2. Resolve index
-            int index = resolve_global(compiler, n->name);
-            if (index == -1) {
-                fprintf(stderr, "Compiler Error: Undefined variable '%.*s'\n", n->name.length, n->name.lexeme);
-                compiler->hadError = 1; return;
+            int arg = resolve_local(compiler, n->name);
+            if (arg != -1) {
+                emit_byte(compiler, OP_SET_LOCAL, n->node.line);
+                emit_byte(compiler, (uint8_t)arg, n->node.line);
+            } else {
+                arg = resolve_global(compiler, n->name);
+                if (arg != -1) {
+                    emit_byte(compiler, OP_SET_GLOBAL, n->node.line);
+                    emit_byte(compiler, (uint8_t)arg, n->node.line);
+                } else {
+                    fprintf(stderr, "Compiler Error: Undefined variable '%.*s'\n", n->name.length, n->name.lexeme);
+                    compiler->hadError = 1;
+                }
             }
-            
-            // 3. Update global
-            // Since OP_SET_GLOBAL now peeks, the value REMAINS on the stack
-            emit_byte(compiler, OP_SET_GLOBAL, n->node.line);
-            emit_byte(compiler, (uint8_t)index, n->node.line);
+
             break;
         }
 
