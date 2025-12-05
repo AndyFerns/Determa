@@ -162,6 +162,9 @@ static void run_file_mode() {
         cli_warn("File '%s' does not end with .det extension.", config.file_path);
     }
 
+    // Give feedback to the user
+    cli_info("Reading file: %s", config.file_path);
+
     char* source = read_file_contents(config.file_path);
     
     // Initialize Persistent Systems
