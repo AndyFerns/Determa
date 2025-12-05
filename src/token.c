@@ -56,8 +56,15 @@ const char* token_type_to_string(TokenType type) {
         case TOKEN_MINUS:     return "TOKEN_MINUS";
         case TOKEN_STAR:      return "TOKEN_STAR";
         case TOKEN_SLASH:     return "TOKEN_SLASH";
+        case TOKEN_PERCENT:   return "TOKEN_PERCENT";
         case TOKEN_SEMICOLON: return "TOKEN_SEMICOLON";
         case TOKEN_EQUALS:    return "TOKEN_EQUALS";
+
+        case TOKEN_PLUS_EQUAL:    return "TOKEN_PLUS_EQUAL";    
+        case TOKEN_MINUS_EQUAL:   return "TOKEN_MINUS_EQUAL";   
+        case TOKEN_STAR_EQUAL:    return "TOKEN_STAR_EQUAL";    
+        case TOKEN_SLASH_EQUAL:   return "TOKEN_SLASH_EQUAL";   
+        case TOKEN_PERCENT_EQUAL: return "TOKEN_PERCENT_EQUAL"; 
 
         case TOKEN_BANG:          return "TOKEN_BANG";
         case TOKEN_BANG_EQUAL:    return "TOKEN_BANG_EQUAL";
