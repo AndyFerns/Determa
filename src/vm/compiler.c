@@ -236,6 +236,24 @@ static void begin_scope(Compiler* compiler) {
 }
 
 /**
+ * @brief Function to declare a scope as Closed (Similar to block creation).
+ * Pops local variables inside scope to free memory as locals not needed
+ * 
+ * @param compiler 
+ * @param line 
+ */
+static void end_scope(Compiler* compiler, int line) {
+    compiler->scopeDepth--;
+
+    // Pop locals that were in this scope
+    while (compiler->localCount > 0 && 
+           compiler->locals[compiler->localCount - 1].depth > compiler->scopeDepth) {
+        emit_byte(compiler, OP_POP, line);
+        compiler->localCount--;
+    }
+}
+
+/**
  * @brief Function to add variable to local scope.
  * Capped out at 256 for now
  * 
