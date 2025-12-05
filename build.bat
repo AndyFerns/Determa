@@ -49,6 +49,7 @@ SET TEST_SOURCES=^
     tests\test.c ^
     tests\lexer\test_lexer.c ^
     tests\parser\test_parser.c ^
+    tests\parser\test_compound.c^
     tests\typechecker\test_typechecker.c ^
     tests\vm\test_vm.c ^
     tests\vm\test_gc.c^
