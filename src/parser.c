@@ -261,8 +261,8 @@ static AstNode* parse_factor(Parser* parser) {
     // calling parse_unary with a fallback to parse_primary
     AstNode* node = parse_unary(parser);
 
-    TokenType op_types[] = {TOKEN_STAR, TOKEN_SLASH};
-    while (match(parser, op_types, 2)) {
+    TokenType op_types[] = {TOKEN_STAR, TOKEN_SLASH, TOKEN_PERCENT};
+    while (match(parser, op_types, 3)) {
         Token op = parser->previous;
         AstNode* right = parse_unary(parser); // right side also unary
         node = new_binary_op_node(op, node, right, op.line);
