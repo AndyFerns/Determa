@@ -23,6 +23,7 @@ typedef enum {
     OP_SUBTRACT,     // Pop 2, Subtract, Push result
     OP_MULTIPLY,     // Pop 2, Multiply, Push result
     OP_DIVIDE,       // Pop 2, Divide, Push result
+    OP_MODULO,       // Pop 2, Divide, Push remainder
     OP_NEGATE,       // Pop 1, Negate, Push result
 
     // --- Logic & Comparison ---
