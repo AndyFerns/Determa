@@ -308,6 +308,26 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
             break;
         }
 
+        case NODE_VAR_ASSIGN: {
+            AstNodeVarAssign* n = (AstNodeVarAssign*)expr;
+
+            // 1. Compile the value (Pushes result to stack)
+            compile_expression(compiler, n->expression);
+            
+            // 2. Resolve index
+            int index = resolve_global(compiler, n->name);
+            if (index == -1) {
+                fprintf(stderr, "Compiler Error: Undefined variable '%.*s'\n", n->name.length, n->name.lexeme);
+                compiler->hadError = 1; return;
+            }
+            
+            // 3. Update global
+            // Since OP_SET_GLOBAL now peeks, the value REMAINS on the stack
+            emit_byte(compiler, OP_SET_GLOBAL, n->node.line);
+            emit_byte(compiler, (uint8_t)index, n->node.line);
+            break;
+        }
+
         case NODE_UNARY_OP: {
             AstNodeUnaryOp* n = (AstNodeUnaryOp*)expr;
             compile_expression(compiler, n->operand);
