@@ -29,7 +29,16 @@
 #define VERSION_NAME  "Cedar"
 
 // --- Config ---
-static int pda_debug_mode = 0;
+
+typedef struct {
+    int pda_debug;
+    int show_version;
+    int show_help;
+    const char* file_path;
+} CliConfig;
+
+static CliConfig config = {0, 0, 0, NULL};
+
 
 // --- UX Helpers ---
 
@@ -226,26 +235,43 @@ static void run_repl_mode() {
 
 
 int main(int argc, char* argv[]) {
-    if (argc > 1 && strcmp(argv[1], "--pda-debug") == 0) {
-        pda_debug_mode = 1;
-        printf("--- PDA DEBUG MODE ENABLED ---\n");
-        // Shift args so we can handle files correctly
-        argv++;
-        argc--;
+    // Argument Parsing
+    for (int i = 1; i < argc; i++) {
+        const char* arg = argv[i];
+
+        if (strcmp(arg, "--help") == 0 || strcmp(arg, "-h") == 0) {
+            config.show_help = 1;
+        } 
+        else if (strcmp(arg, "--version") == 0 || strcmp(arg, "-v") == 0) {
+            config.show_version = 1;
+        } 
+        else if (strcmp(arg, "--pda-debug") == 0 || strcmp(arg, "-d") == 0) {
+            config.pda_debug = 1;
+        } 
+        else {
+            // It must be a file path
+            if (config.file_path == NULL) {
+                config.file_path = arg;
+            } else {
+                cli_error("Unexpected argument '%s'. Only one file supported.", arg);
+            }
+        }
     }
 
-    printf("Determa Compiler [v0.2 'Cedar' Dev Build]\n");
-    // printf("Parsing source: \"%s\"\n\n", source_string);
+    // Execute respective mode
+    if (config.show_help) {
+        print_help();
+        return 0;
+    }
+    if (config.show_version) {
+        print_version();
+        return 0;
+    }
 
-    // no arguments, defaults to REPL mode
-    if (argc == 1) {
-        repl();
-    } else if (argc == 2) {
-        // adding a file path as an argument
-        runFile(argv[1]);
+    if (config.file_path != NULL) {
+        run_file_mode();
     } else {
-        fprintf(stderr, "Usage: determa [path] [--pda-debug]\n");
-        exit(64);
+        run_repl_mode();
     }
 
     return 0;
