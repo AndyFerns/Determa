@@ -174,7 +174,8 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
 
             // Arithmetic
             if (op->op.type == TOKEN_PLUS || op->op.type == TOKEN_MINUS ||
-                op->op.type == TOKEN_STAR || op->op.type == TOKEN_SLASH) {
+                op->op.type == TOKEN_STAR || op->op.type == TOKEN_SLASH ||
+                op->op.type == TOKEN_PERCENT) {
                 
                 // Int Math
                 if (leftType == TYPE_INT && rightType == TYPE_INT) return TYPE_INT;
