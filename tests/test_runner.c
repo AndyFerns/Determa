@@ -13,6 +13,7 @@
 #include "test_typechecker.h"
 #include "test_gc.h"
 #include "test_vm.h"
+#include "test_compound.h"
 #include "typechecker.h" // For init
 #include "vm/compiler.h" // For init
 
@@ -58,19 +59,21 @@ int main(int argc, char* argv[]) {
     printf("\n");
     test_gc_suite();
 
-    // --- NEW: Phase 6 Tests ---
+    // --- Phase 6 Tests ---
     printf("\n");
     run_test(test_parser_bool_literals, "Parser - Bool Literals");
     run_test(test_parser_logic_precedence, "Parser - Logic Precedence");
 
-    // --- NEW: Phase 6 Part B Tests ---
+    // --- Phase 6 Part B Tests ---
     printf("\n");
     run_test(test_parser_block, "Parser - Blocks {}");
     run_test(test_parser_if, "Parser - If/Else");
     run_test(test_parser_while, "Parser - While Loop");
 
-    // ... Rest of file ...
+    // Phase 7 Feature Tests
     printf("\n");
+    run_test(test_parser_modulo, "Parser - Modulo Operator");
+    run_test(test_parser_compound_assignment, "Parser - Compound Assignment Desugaring");
 
     // --- Add more tests here as we build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");
