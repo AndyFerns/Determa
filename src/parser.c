@@ -438,21 +438,49 @@ static AstNode* parse_assignment(Parser* parser) {
     // We call the next level down (Equality)
     AstNode* expr = parse_equality(parser);
 
-    // 2. Look for the '=' operator
-    if (match(parser, (TokenType[]){TOKEN_EQUALS}, 1)) {
-        Token equals = parser->previous;
-        
-        // 3. Recursively parse the right side (allows chaining a = b = 1)
+    TokenType assignOps[] = {
+        TOKEN_EQUALS, 
+        TOKEN_PLUS_EQUAL, TOKEN_MINUS_EQUAL, 
+        TOKEN_STAR_EQUAL, TOKEN_SLASH_EQUAL,
+        TOKEN_PERCENT_EQUAL
+    };
+
+    if (match(parser, assignOps, 6)) {
+        Token op = parser->previous;
         AstNode* value = parse_assignment(parser);
 
-        // 4. Verify the left side is a valid assignment target
-        // For now, the only valid target is a variable name (VAR_ACCESS node)
         if (expr->type == NODE_VAR_ACCESS) {
             Token name = ((AstNodeVarAccess*)expr)->name;
-            // Transformation: We discard the VarAccess node and create a VarAssign node
-            // Note: In a robust compiler we'd free 'expr' here to avoid a tiny memory leak during parsing
-            free(expr); 
-            return new_var_assign_node(name, value, equals.line);
+
+            // Handle Compound Assignment (Desugaring)
+            if (op.type != TOKEN_EQUALS) {
+                // Transform "x += 1" into "x = x + 1"
+                
+                // 1. Convert the assignment op to a binary op
+                TokenType binOpType;
+                switch (op.type) {
+                    case TOKEN_PLUS_EQUAL:    binOpType = TOKEN_PLUS; break;
+                    case TOKEN_MINUS_EQUAL:   binOpType = TOKEN_MINUS; break;
+                    case TOKEN_STAR_EQUAL:    binOpType = TOKEN_STAR; break;
+                    case TOKEN_SLASH_EQUAL:   binOpType = TOKEN_SLASH; break;
+                    case TOKEN_PERCENT_EQUAL: binOpType = TOKEN_PERCENT; break;
+                    default: binOpType = TOKEN_PLUS; break; // Unreachable
+                }
+                
+                // 2. Create the synthetic binary operator node (x + 1)
+                // Reuse 'expr' (VarAccess x) as the left side
+                Token binToken = op;
+                binToken.type = binOpType;
+                AstNode* binOpNode = new_binary_op_node(binToken, expr, value, op.line);
+                
+                // 3. Assign the result back to x
+                return new_var_assign_node(name, binOpNode, op.line);
+            }
+
+            // Standard Assignment (x = 1)
+            // Discard the VarAccess node as we replace it with VarAssign
+            // (Ideally free(expr) here, but for now we rely on GC/OS cleanup)
+            return new_var_assign_node(name, value, op.line);
         }
 
         error_at_current(parser, "Invalid assignment target.");
