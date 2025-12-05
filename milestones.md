@@ -191,7 +191,7 @@ Status: Not Started (Next Step).
 evaluate(Node* node, SymbolTable* table).
 ```
 
-- [ ] This function will walk the AST and perform the actions.
+- [x] This function will walk the AST and perform the actions.
 
 BinaryOpNode: Evaluate left, evaluate right, perform the math.
 
@@ -199,13 +199,13 @@ VarDeclNode: Evaluate the expression, store the result in the SymbolTable.
 
 IDNode: Look up the variable's value in the SymbolTable.
 
-- [ ] [EXAM FEATURE] Implement "The Halting Guard":
+- [x] [EXAM FEATURE] Implement "The Halting Guard":
 
-- [ ] Add an instruction counter to your evaluate loop.
+- [x] Add an instruction counter to your evaluate loop.
 
-- [ ] If the counter exceeds a large number (e.g., 1,000,000), stop execution and report a "Potential Infinite Loop" error.
+- [x] If the counter exceeds a large number (e.g., 1,000,000), stop execution and report a "Potential Infinite Loop" error.
 
-- [ ] Result: This demonstrates your understanding of the Halting Problem (LO 6.4)—that you cannot statically prove a loop will halt, so you must use a dynamic guard.
+- [x] Result: This demonstrates your understanding of the Halting Problem (LO 6.4)—that you cannot statically prove a loop will halt, so you must use a dynamic guard.
 
 ## Phase 6: Advanced Features (The "Wow" Factor)
 
@@ -232,7 +232,7 @@ Status: To Be Started. (This is the resume polish).
 
 Goal: Convert Determa code into another, lower-level language instead of running it.
 
-- [ ] Define a Simple Stack-Based IR: Create a simple instruction set (e.g., PUSH 5, PUSH 10, ADD, STORE "x", LOAD "x").
+- [x] Define a Simple Stack-Based IR: Create a simple instruction set (e.g., PUSH 5, PUSH 10, ADD, STORE "x", LOAD "x").
 
 - [ ] Write a Code Generator: Write a new recursive function generate_code(Node* node) that walks the AST and prints the IR instructions instead of evaluating them.
 
