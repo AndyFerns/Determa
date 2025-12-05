@@ -135,6 +135,31 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
             return type;
         }
 
+        case NODE_VAR_ASSIGN: {
+            AstNodeVarAssign* assign = (AstNodeVarAssign*)expr;
+
+            // 1. Check if variable exists
+            // Note: using lookup, NOT define, because the var must already exist.
+            DataType varType = symbol_table_lookup(&tc->symbols, assign->name.lexeme, assign->name.length);
+            if (varType == TYPE_ERROR) {
+                char buf[256];
+                snprintf(buf, sizeof(buf), "Undefined variable '%.*s'", assign->name.length, assign->name.lexeme);
+                error(tc, buf);
+                return TYPE_ERROR;
+            }
+
+            // 2. Check value type
+            DataType valueType = check_expression(tc, assign->expression);
+            
+            // 3. Ensure types match (e.g. can't assign string to int var)
+            if (varType != valueType && valueType != TYPE_ERROR) {
+                error(tc, "Type mismatch in assignment.");
+                return TYPE_ERROR;
+            }
+            
+            return valueType;
+        }
+
         case NODE_BINARY_OP: {
             AstNodeBinaryOp* op = (AstNodeBinaryOp*)expr;
 
