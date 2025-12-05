@@ -34,13 +34,22 @@ typedef struct {
 static CompilerSymbol globalSymbols[256];
 static int globalCount;
 
+// --- Local Variable Struct ---
+typedef struct {
+    Token name;
+    int depth; // 0 = global, 1 = block, etc.
+} Local;
+
 // State for the compiler
 typedef struct {
     Chunk* chunk;
     int hadError;
+
+    // Local tracking
+    Local locals[256];
+    int localCount;
+    int scopeDepth;
 } Compiler;
-
-
 
 
 // --- Active Compiler Tracking for GC ---
@@ -62,7 +71,6 @@ void mark_compiler_roots() {
         mark_value(chunk->constants.values[i]);
     }
 }
-
 
 
 
@@ -213,6 +221,69 @@ static void emit_binary_op(Compiler* compiler, TokenType opType, int line) {
     }
 }
 
+// =========================
+// --- Scope Management ---
+// =========================
+
+/**
+ * @brief Function to begin scope management. 
+ * Adds 1 to the scope depth each time its called
+ * 
+ * @param compiler pointer to the main compiler struct
+ */
+static void begin_scope(Compiler* compiler) {
+    compiler->scopeDepth++;
+}
+
+/**
+ * @brief Function to add variable to local scope.
+ * Capped out at 256 for now
+ * 
+ * @param compiler 
+ * @param name 
+ * @return int 
+ */
+static int add_local(Compiler* compiler, Token name) {
+    if (compiler->localCount >= 256) {
+        fprintf(stderr, "Too many local variables in function.\n");
+        return -1;
+    }
+
+    Local* local = &compiler->locals[compiler->localCount];
+    local->name = name;
+    local->depth = compiler->scopeDepth;
+    compiler->localCount++;
+    return compiler->localCount - 1;
+}
+
+/**
+ * @brief Function to resolve local variables. 
+ * Walks backward down the locals array under the compiler struct
+ * 
+ * @param compiler 
+ * @param name 
+ * @return int 
+ */
+static int resolve_local(Compiler* compiler, Token name) {
+    // Walk backwards (shadowing)
+    for (int i = compiler->localCount - 1; i >= 0; i--) {
+        Local* local = &compiler->locals[i];
+        if (name.length == local->name.length &&
+            strncmp(name.lexeme, local->name.lexeme, name.length) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/**
+ * @brief Function to resolve global variables. 
+ * Walks down the globalSymbols array 
+ * 
+ * @param compiler 
+ * @param name 
+ * @return int 
+ */
 static int resolve_global(Compiler* compiler, Token name) {
     (void)compiler;
     for (int i = 0; i < globalCount; i++) {
@@ -226,7 +297,14 @@ static int resolve_global(Compiler* compiler, Token name) {
     return -1;
 }
 
-// Creates a new global variable mapping
+
+/**
+ * @brief Function to create a new global variable mapping
+ * 
+ * @param compiler 
+ * @param name 
+ * @return int 
+ */
 static int define_global(Compiler* compiler, Token name) {
     if (globalCount >= 256) {
         fprintf(stderr, "Too many global variables.\n");
