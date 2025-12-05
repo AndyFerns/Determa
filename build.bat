@@ -15,6 +15,9 @@ REM --- Target Executables ---
 SET COMPILER_EXE=bin\determa.exe
 SET TEST_RUNNER_EXE=bin\determa_test.exe
 
+REM --- Ensure bin directory exists ---
+if not exist bin mkdir bin
+
 REM --- Source Files ---
 REM 1. Frontend (Lexer, Parser, TypeChecker) - In src/
 SET FRONTEND_SOURCES= ^
