@@ -395,7 +395,7 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
 
         case NODE_VAR_ASSIGN: {
             AstNodeVarAssign* n = (AstNodeVarAssign*)expr;
-            
+
             compile_expression(compiler, n->expression);
             
             int arg = resolve_local(compiler, n->name);
@@ -460,9 +460,12 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
         // --- Block ---
         case NODE_BLOCK: {
             AstNodeBlock* block = (AstNodeBlock*)stmt;
+
+            begin_scope(compiler); // Each Block is its own scope
             for (int i = 0; i < block->statement_count; i++) {
                 compile_statement(compiler, block->statements[i]);
             }
+            end_scope(compiler, block->node.line);
             break;
         }
 
@@ -520,22 +523,22 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
             break;
         }
 
+        // Variable declaration
         case NODE_VAR_DECL: {
             AstNodeVarDecl* n = (AstNodeVarDecl*)stmt;
+            compile_expression(compiler, n->init); // Push value
             
-            // 1. Compile the initializer (pushes 10 to stack)
-            compile_expression(compiler, n->init);
-            
-            // 2. Assign a new index to 'x'
-            int index = define_global(compiler, n->name);
-            if (index == -1) {
-                // define_global already set hadError
-                return;
+            if (compiler->scopeDepth > 0) {
+                // LOCAL:
+                // "Claim" stack slot as variable (value already on the stack)
+                add_local(compiler, n->name);
+            } else {
+                // Fallback to GLOBAL variable declaration
+                int index = define_global(compiler, n->name);
+                emit_byte(compiler, OP_SET_GLOBAL, n->node.line);
+                emit_byte(compiler, (uint8_t)index, n->node.line);
+                emit_byte(compiler, OP_POP, n->node.line);
             }
-            
-            // 3. Emit OP_SET_GLOBAL [INDEX] to pop 10 and store it in slot 0
-            emit_byte(compiler, OP_SET_GLOBAL, n->node.line);
-            emit_byte(compiler, (uint8_t)index, n->node.line);
             break;
         }
         
@@ -584,9 +587,10 @@ int compile_ast(struct AstNode* ast, Chunk* chunk) {
     Compiler compiler;
     compiler.chunk = chunk;
     compiler.hadError = 0;
-    // no need to reset global Count anymore as it persists
-    // compiler.globalCount = 0;   // start fresh for every compile
 
+    // Initialize each scope state
+    compiler.localCount = 0;
+    compiler.scopeDepth = 0;
     // set active compiler for gc
     current = &compiler; 
 
