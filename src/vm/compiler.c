@@ -185,6 +185,8 @@ static void emit_binary_op(Compiler* compiler, TokenType opType, int line) {
         case TOKEN_STAR:  emit_byte(compiler, OP_MULTIPLY, line); break;
         case TOKEN_SLASH: emit_byte(compiler, OP_DIVIDE, line); break;
 
+        case TOKEN_PERCENT: emit_byte(compiler, OP_MODULO, line); break;
+
         // --- Comparisons ---
         case TOKEN_EQUAL_EQUAL:   emit_byte(compiler, OP_EQUAL, line); break;
         case TOKEN_GREATER:       emit_byte(compiler, OP_GREATER, line); break;
