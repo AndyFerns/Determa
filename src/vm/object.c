@@ -73,6 +73,15 @@ ObjString* take_string(char* chars, int length) {
     return allocate_string(chars, length);
 }
 
+
+ObjFunction* new_function() {
+    ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
+    function->arity = 0;
+    function->name = NULL; // NULL name means top-level script
+    init_chunk(&function->chunk);
+    return function;
+}
+
 void print_object(Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_STRING:
