@@ -134,6 +134,35 @@ static void print_ast_recursive(AstNode* node, int indent) {
             print_ast_recursive(n->body, indent + 4);
             break;
         }
+
+        // -- Function Creation Suite ---
+        case NODE_FUNC_DECL: {
+            AstNodeFuncDecl* n = (AstNodeFuncDecl*)node;
+            printf("FUNC_DECL: %.*s (", n->name.length, n->name.lexeme);
+            // Print params
+            for(int i=0; i<n->param_count; i++) {
+                printf("%.*s%s", n->params[i].length, n->params[i].lexeme, (i<n->param_count-1)?", ":"");
+            }
+            printf(") : %s\n", type_to_string(n->returnType));
+            print_ast_recursive(n->body, indent + 2);
+            break;
+        }
+
+        case NODE_RETURN: {
+            AstNodeReturn* n = (AstNodeReturn*)node;
+            printf("RETURN\n");
+            print_ast_recursive(n->value, indent + 2);
+            break;
+        }
+        
+        case NODE_CALL: {
+            AstNodeCall* n = (AstNodeCall*)node;
+            printf("CALL: %.*s\n", n->callee.length, n->callee.lexeme);
+            for(int i=0; i<n->arg_count; i++) {
+                print_ast_recursive(n->args[i], indent + 2);
+            }
+            break;
+        }
         
         // add more cases as the AST node implementation grows
         default:
@@ -607,5 +636,68 @@ AstNode* new_while_node(AstNode* condition, AstNode* body, int line) {
     node->node.line = line;
     node->condition = condition;
     node->body = body;
+    return (AstNode*)node;
+}
+
+
+// --- Function related suite  ---
+
+/**
+ * @brief Function to declare a new function (lol) AST node
+ * 
+ * @param name Name of the function
+ * @param params Pointer to the array of parameters used in the function
+ * @param param_count Number of parameters passed to the function
+ * @param returnType Return type of the function
+ * @param body Body (block) of the function
+ * @param line 
+ * @return AstNode* 
+ */
+AstNode* new_func_decl_node(Token name, Token* params, int param_count, DataType returnType, AstNode* body, int line) {
+    AstNodeFuncDecl* node = (AstNodeFuncDecl*)malloc(sizeof(AstNodeFuncDecl));
+    if (!node) return NULL;
+    node->node.type = NODE_FUNC_DECL;
+    node->node.line = line;
+    node->name = name;
+    node->params = params; // Assumes caller allocated array
+    node->param_count = param_count;
+    node->returnType = returnType;
+    node->body = body;
+    return (AstNode*)node;
+}
+
+/**
+ * @brief Function to create a new Return Datatype AST node
+ * 
+ * @param value Value of the return type
+ * @param line 
+ * @return AstNode* 
+ */
+AstNode* new_return_node(AstNode* value, int line) {
+    AstNodeReturn* node = (AstNodeReturn*)malloc(sizeof(AstNodeReturn));
+    if (!node) return NULL;
+    node->node.type = NODE_RETURN;
+    node->node.line = line;
+    node->value = value;
+    return (AstNode*)node;
+}
+
+/**
+ * @brief Function to create a new function call AST node
+ * 
+ * @param callee Token which holds the callee of the function (block)
+ * @param args Double Pointer to the Array holding the Arguments passed to the function
+ * @param arg_count Number of arguments passed to the function
+ * @param line 
+ * @return AstNode* 
+ */
+AstNode* new_call_node(Token callee, AstNode** args, int arg_count, int line) {
+    AstNodeCall* node = (AstNodeCall*)malloc(sizeof(AstNodeCall));
+    if (!node) return NULL;
+    node->node.type = NODE_CALL;
+    node->node.line = line;
+    node->callee = callee;
+    node->args = args; // Assumes caller allocated array
+    node->arg_count = arg_count;
     return (AstNode*)node;
 }
