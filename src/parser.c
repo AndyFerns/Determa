@@ -65,6 +65,8 @@ static AstNode* parse_declaration(Parser* parser);
 static AstNode* parse_statement(Parser* parser);
 static AstNode* parse_block(Parser* parser);
 static AstNode* parse_if_statement(Parser* parser);
+static AstNode* parse_function_declaration(Parser* parser);
+static AstNode* parse_return_statement(Parser* parser);
 
 // --- Error Handling & Token Helpers ---
 
@@ -203,10 +205,33 @@ static AstNode* parse_primary(Parser* parser) {
         return new_string_literal_node(strVal, parser->previous.line);
     }
 
-    // Handle identifier
+    // Identifier: Var or Call
     if (check(parser, TOKEN_ID)) {
         Token name = parser->current;
         advance(parser);
+        
+        // Call?
+        if (check(parser, TOKEN_LPAREN)) {
+            advance(parser); // Consume (
+            int line = parser->previous.line;
+            int arg_capacity = 4;
+            int arg_count = 0;
+            AstNode** args = malloc(sizeof(AstNode*) * arg_capacity);
+            
+            if (!check(parser, TOKEN_RPAREN)) {
+                do {
+                    if (arg_count >= arg_capacity) {
+                        arg_capacity *= 2;
+                        args = realloc(args, sizeof(AstNode*) * arg_capacity);
+                    }
+                    args[arg_count++] = parse_expression(parser);
+                } while (match(parser, (TokenType[]){TOKEN_COMMA}, 1));
+            }
+            consume(parser, TOKEN_RPAREN, "Expected ')' after args");
+            TRACE_EXIT("Primary (Call)");
+            return new_call_node(name, args, arg_count, line);
+        }
+
         TRACE_EXIT("Primary (VarAccess)");
         return new_var_access_node(name, parser->previous.line);
     }
@@ -414,6 +439,13 @@ static AstNode* parse_var_declaration(Parser* parser) {
  */
 static AstNode* parse_declaration(Parser* parser) {
     TRACE_ENTER("Declaration");
+
+    if (match(parser, (TokenType[]){TOKEN_FUNC}, 1)) {
+        AstNode* decl = parse_function_declaration(parser);
+        TRACE_EXIT("Declaration (func)");
+        return decl;
+    }
+    
     if (match(parser, (TokenType[]){TOKEN_VAR}, 1)) {
         AstNode* decl = parse_var_declaration(parser);
         TRACE_EXIT("Declaration (Var)");
@@ -581,6 +613,65 @@ static AstNode* parse_while_statement(Parser* parser) {
     return new_while_node(condition, body, line);
 }
 
+
+/**
+ * @brief Function to parse a return statement
+ * 
+ * Parses the return keyword, consumes it and returns the DataType AST node
+ * 
+ * Syntax: return expr;
+ * 
+ * @param parser 
+ * @return AstNode* 
+ */
+static AstNode* parse_return_statement(Parser* parser) {
+    TRACE_ENTER("ReturnStmt"); int line = parser->previous.line;
+    AstNode* val = NULL;
+    if (!check(parser, TOKEN_SEMICOLON)) val = parse_expression(parser);
+    consume(parser, TOKEN_SEMICOLON, "Expected ';' after return value");
+    TRACE_EXIT("ReturnStmt"); return new_return_node(val, line);
+}
+
+
+/**
+ * @brief Function to parse a func (function) declaration block
+ * 
+ * Syntax: func name(arg1, arg2, ...) : returnType { ... }
+ * 
+ * @param parser 
+ * @return AstNode* 
+ */
+static AstNode* parse_function_declaration(Parser* parser) {
+    TRACE_ENTER("FuncDecl"); int line = parser->previous.line;
+    consume(parser, TOKEN_ID, "Expected function name"); Token name = parser->previous;
+    consume(parser, TOKEN_LPAREN, "Expected '('");
+    
+    int cap = 4, count = 0;
+    Token* params = malloc(sizeof(Token) * cap);
+    if (!check(parser, TOKEN_RPAREN)) {
+        do {
+            if (count >= cap) { cap *= 2; params = realloc(params, sizeof(Token) * cap); }
+            consume(parser, TOKEN_ID, "Expected param name");
+            params[count++] = parser->previous;
+        } while (match(parser, (TokenType[]){TOKEN_COMMA}, 1));
+    }
+    consume(parser, TOKEN_RPAREN, "Expected ')'");
+    
+    DataType retType = TYPE_VOID;
+    if (match(parser, (TokenType[]){TOKEN_COLON}, 1)) {
+        if (match(parser, (TokenType[]){TOKEN_TYPE_INT}, 1)) retType = TYPE_INT;
+        else if (match(parser, (TokenType[]){TOKEN_TYPE_BOOL}, 1)) retType = TYPE_BOOL;
+        else if (match(parser, (TokenType[]){TOKEN_TYPE_STRING}, 1)) retType = TYPE_STRING;
+        else if (match(parser, (TokenType[]){TOKEN_TYPE_VOID}, 1)) retType = TYPE_VOID;
+        else error_at_current(parser, "Invalid return type");
+    }
+    
+    consume(parser, TOKEN_LEFT_BRACE, "Expected '{'");
+    AstNode* body = parse_block(parser);
+    TRACE_EXIT("FuncDecl");
+    return new_func_decl_node(name, params, count, retType, body, line);
+}
+
 /**
  * @brief Handles executable statements (non-declaration)
  * 
@@ -611,6 +702,12 @@ static AstNode* parse_statement(Parser* parser) {
     if (match(parser, (TokenType[]){TOKEN_LEFT_BRACE}, 1)) {
         AstNode* stmt = parse_block(parser);
         TRACE_EXIT("Statement (block)");
+        return stmt;
+    }
+
+    if (match(parser, (TokenType[]){TOKEN_RETURN}, 1)) {
+        AstNode* stmt = parse_return_statement(parser);
+        TRACE_EXIT("Statement(return)");
         return stmt;
     }
 
