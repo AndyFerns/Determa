@@ -117,11 +117,9 @@ static void skip_whitespace(Lexer* lexer) {
 /**
  * @brief Helper to check if a lexeme is a keyword.
  */
-static TokenType check_keyword(Lexer* lexer, int start, int length,
-                               const char* rest, TokenType type) {
+static TokenType check_keyword(Lexer* lexer, int start, int length, const char* rest, TokenType type) {
     // Check if the length matches and the string matches
-    if (lexer->current - lexer->start == start + length &&
-        memcmp(lexer->source + lexer->start + start, rest, length) == 0) {
+    if (lexer->current - lexer->start == start + length && memcmp(lexer->source + lexer->start + start, rest, length) == 0) {
         return type;
     }
     return TOKEN_ID; // Not a keyword, just a regular identifier
@@ -134,18 +132,54 @@ static TokenType check_keyword(Lexer* lexer, int start, int length,
  */
 static TokenType identifier_type(Lexer* lexer) {
     switch (lexer->source[lexer->start]) {
+        // print
         case 'p':
             return check_keyword(lexer, 1, 4, "rint", TOKEN_PRINT);
-        case 'v':
-            return check_keyword(lexer, 1, 2, "ar", TOKEN_VAR);
+        
+        // var or void
+        case 'v': {
+            int length = lexer->current - lexer->start;
+            if (length == 3) {
+                return check_keyword(lexer, 1, 2, "ar", TOKEN_VAR);
+            }
+
+            if (length == 4) {
+                return check_keyword(lexer, 1, 3, "oid", TOKEN_TYPE_VOID);
+            }
+            return TOKEN_ID;
+        }
+
+        // true
         case 't':
             return check_keyword(lexer, 1, 3, "rue", TOKEN_TRUE);
-        case 'f':
-            return check_keyword(lexer, 1, 4, "alse", TOKEN_FALSE);
         
-        case 'i':
-            return check_keyword(lexer, 1, 1, "f", TOKEN_IF);
+        // false or func
+        case 'f': {
+            int length = lexer->current - lexer->start;
+            if (length == 4) {
+                return check_keyword(lexer, 1, 3, "unc", TOKEN_FUNC);
+            }
+            if (length == 5) {
+                return check_keyword(lexer, 1, 4, "alse", TOKEN_FALSE);
+            }
+            return TOKEN_ID;
+        }
+
+        // if or int
+        case 'i': {
+            int length = lexer->current - lexer->start;
+            if (length == 2) {
+                return check_keyword(lexer, 1, 1, "f", TOKEN_IF);
+            }
+
+            if (length == 3) {
+                return check_keyword(lexer, 1, 2,  "nt", TOKEN_TYPE_INT);
+            }
+
+            return TOKEN_ID;
+        }
         
+        // else or elif
         case 'e': {
             int length = lexer->current - lexer->start;
             if (length == 4) {
@@ -158,10 +192,20 @@ static TokenType identifier_type(Lexer* lexer) {
             }
             return TOKEN_ID;
         }
-        
+
+        // while
         case 'w':
             return check_keyword(lexer, 1, 4, "hile", TOKEN_WHILE);
-        
+        // return
+        case 'r':
+            return check_keyword(lexer, 1, 5, "eturn", TOKEN_RETURN);
+
+        // bool
+        case 'b':
+            return check_keyword(lexer, 1, 3, "ool", TOKEN_TYPE_BOOL);
+        // str
+        case 's':
+            return check_keyword(lexer, 1, 2, "tr",TOKEN_TYPE_STRING);
     }
     return TOKEN_ID; // Default to identifier
 }
@@ -269,6 +313,9 @@ Token get_next_token(Lexer* lexer) {
         case ')': return make_token(lexer, TOKEN_RPAREN);
         case '{': return make_token(lexer, TOKEN_LEFT_BRACE);  
         case '}': return make_token(lexer, TOKEN_RIGHT_BRACE); 
+
+        case ',': return make_token(lexer, TOKEN_COMMA); 
+        case ':': return make_token(lexer, TOKEN_COLON); 
 
         case ';': return make_token(lexer, TOKEN_SEMICOLON);
 
