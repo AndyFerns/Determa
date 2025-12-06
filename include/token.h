@@ -28,6 +28,8 @@ typedef enum {
     TOKEN_RPAREN,     // )
     TOKEN_LEFT_BRACE, // { 
     TOKEN_RIGHT_BRACE,// }
+    TOKEN_COMMA,      // , used as a separator in functions and arrays 
+    TOKEN_COLON,      // : used for function return values
 
     // Arithmetic Operators 
     TOKEN_PLUS,       // +
