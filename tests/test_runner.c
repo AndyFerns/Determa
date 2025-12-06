@@ -14,6 +14,7 @@
 #include "test_gc.h"
 #include "test_vm.h"
 #include "test_compound.h"
+#include "test_locals.h"
 #include "typechecker.h" // For init
 #include "vm/compiler.h" // For init
 
@@ -74,6 +75,12 @@ int main(int argc, char* argv[]) {
     printf("\n");
     run_test(test_parser_modulo, "Parser - Modulo Operator");
     run_test(test_parser_compound_assignment, "Parser - Compound Assignment Desugaring");
+
+    // Phase 8 Local Variables1
+    printf("\n");
+    run_test(test_compiler_locals, "Compiler - Local Variables");
+    run_test(test_compiler_shadowing, "Compiler - Shadowing");
+    run_test(test_compiler_pop_scope, "Compiler - Scope Cleanup");
 
     // --- Add more tests here as we build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");
