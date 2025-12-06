@@ -71,6 +71,14 @@ typedef enum {
     TOKEN_ELSE,       // else
     TOKEN_WHILE,      //while
 
+    // --- Function & Type Keywords ---
+    TOKEN_FUNC,         // func (according to determa grammar)
+    TOKEN_RETURN,       // return DataType;
+    TOKEN_TYPE_INT,     // int keyword
+    TOKEN_TYPE_BOOL,    // bool keyword
+    TOKEN_TYPE_STRING,  // str keyword
+    TOKEN_TYPE_VOID,    // void keyword
+
     // Control tokens
     TOKEN_ERROR,      // Represents a lexing error
     TOKEN_EOF         // End Of File
