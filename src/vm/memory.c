@@ -114,17 +114,21 @@ void mark_value(Value value) {
  * These objects will become starting points for reachability.
  */
 static void mark_roots() {
-    // 1. Stack values
+    // Mark Stack values
     for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
         mark_value(*slot);
     }
+    // Mark Call Frames (The functions currently running)
+    for (int i = 0; i < vm.frameCount; i++) {
+        mark_object((Obj*)vm.frames[i].function);
+    }
 
-    // 2. Global variables
+    // Mark Global variables
     for (int i = 0; i < GLOBALS_MAX; i++) {
         mark_value(vm.globals[i]);
     }
 
-    // 3. Compiler roots (when GC runs during compile)
+    // Mark Compiler roots (when GC runs during compile)
     mark_compiler_roots();
 }
 
@@ -147,6 +151,14 @@ static void blacken_object(Obj* object) {
         case OBJ_STRING:
             // Strings have no outgoing references.
             break;
+
+            // mark the func's name and all constants in its chunk (block)
+        case OBJ_FUNCTION: {
+            ObjFunction* function = (ObjFunction*)object;
+            mark_object((Obj*)function->name);
+            mark_array(&function->chunk.constants);
+            break;
+        }
     }
 }
 
