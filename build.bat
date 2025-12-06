@@ -56,6 +56,7 @@ SET TEST_SOURCES=^
     tests\typechecker\test_typechecker.c ^
     tests\vm\test_vm.c ^
     tests\vm\test_gc.c^
+    tests\vm\test_locals.c^
     %LIB_SOURCES%
 
 REM --- Compilation Step ---
