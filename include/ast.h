@@ -16,6 +16,7 @@
 #define AST_H
 
 #include "token.h"
+#include "types.h"
 
 /**
  * @enum AstNodeType
@@ -40,8 +41,12 @@ typedef enum {
     NODE_EXPR_STMT,         // 1 + 1; Expression as a statements
 
     NODE_IF,                // if conditional block
-    NODE_WHILE              // while conditional block
-    
+    NODE_WHILE,             // while conditional block
+
+    // Functions
+    NODE_FUNC_DECL,         // Function definition keyword
+    NODE_RETURN,            // Function return value keyword
+    NODE_CALL               // function call inside blocks
     // add more in the future
 } AstNodeType;
 
@@ -208,6 +213,42 @@ typedef struct {
 } AstNodeWhile;
 
 
+/**
+ * @struct AstNodeFuncDecl
+ * 
+ * @brief Represents: func name(arg1, arg2) : type { body }
+ */
+typedef struct {
+    AstNode node;
+    AstNode* body;      // NODE_BLOCK
+    Token name;         // Name of the function
+    Token* params;      // Array of parameter names
+    int param_count;    // count of the number of parameters
+    DataType returnType;// data type of the return type
+} AstNodeFuncDecl;
+
+/**
+ * @struct AstNodeReturn
+ * @brief Represents: return expr;
+ */
+typedef struct {
+    AstNode node;
+    AstNode* value; // Can be NULL for void return
+} AstNodeReturn;
+
+
+/**
+ * @struct AstNodeCall
+ * @brief Represents: name(arg1, arg2)
+ */
+typedef struct {
+    AstNode node;
+    Token callee;       // Name of function being called
+    AstNode** args;     // Array of arguments
+    int arg_count;
+} AstNodeCall;
+
+
 // ========================
 // --- Helper Functions ---
 // ========================
@@ -315,6 +356,34 @@ AstNode* new_if_node(AstNode* condition, AstNode* thenBranch, AstNode* elseBranc
  * @return AstNode* 
  */
 AstNode* new_while_node(AstNode* condition, AstNode* body, int line);
+
+/**
+ * @brief Function to declare a new function (lol) AST node
+ * 
+ * @return AstNode* 
+ */
+AstNode* new_func_decl_node(Token name, Token* params, int param_count, DataType returnType, AstNode* body, int line);
+
+
+/**
+ * @brief Function to create a new Return DataType AST node
+ * 
+ * @param value 
+ * @param line 
+ * @return AstNode* 
+ */
+AstNode* new_return_node(AstNode* value, int line);
+
+/**
+ * @brief Function to create a new function call AST node
+ * 
+ * @param callee 
+ * @param args 
+ * @param arg_count 
+ * @param line 
+ * @return AstNode* 
+ */
+AstNode* new_call_node(Token callee, AstNode** args, int arg_count, int line);
 
 /**
  * @brief Frees an entire AST tree recursively
