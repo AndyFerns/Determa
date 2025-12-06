@@ -50,6 +50,8 @@ const char* token_type_to_string(TokenType type) {
         case TOKEN_RPAREN:    return "TOKEN_RPAREN";
         case TOKEN_LEFT_BRACE:  return "TOKEN_LEFT_BRACE";
         case TOKEN_RIGHT_BRACE: return "TOKEN_RIGHT_BRACE"; 
+        case TOKEN_COMMA:       return "TOKEN_COMMA";
+        case TOKEN_COLON:       return "TOKEN_COLON";
 
         // Arithmetic Operators and Assignment
         case TOKEN_PLUS:      return "TOKEN_PLUS";
@@ -88,6 +90,12 @@ const char* token_type_to_string(TokenType type) {
         case TOKEN_ELIF:        return "TOKEN_ELIF";  
         case TOKEN_ELSE:        return "TOKEN_ELSE";  
         case TOKEN_WHILE:       return "TOKEN_WHILE"; 
+        case TOKEN_FUNC:        return "TOKEN_FUNC";
+        case TOKEN_RETURN:      return "TOKEN_RETURN";
+        case TOKEN_TYPE_INT:    return "TOKEN_TYPE_INT";
+        case TOKEN_TYPE_BOOL:   return "TOKEN_TYPE_BOOL";
+        case TOKEN_TYPE_STRING: return "TOKEN_TYPE_STRING";
+        case TOKEN_TYPE_VOID:   return "TOKEN_TYPE_VOID";
 
         // Control Tokens
         case TOKEN_ERROR:     return "TOKEN_ERROR";
