@@ -21,7 +21,7 @@ LIB_SOURCES="src/lexer.c src/token.c src/parser.c src/ast.c src/symbol.c src/typ
 COMPILER_SOURCES="src/main.c $LIB_SOURCES"
 
 # 3. Test Source
-TEST_SOURCES="tests/test_runner.c tests/test.c tests/lexer/test_lexer.c tests/parser/test_parser.c tests/parser/test_compound.c tests/typechecker/test_typechecker.c tests/vm/test_vm.c tests/vm/test_gc.c $LIB_SOURCES"
+TEST_SOURCES="tests/test_runner.c tests/test.c tests/lexer/test_lexer.c tests/parser/test_parser.c tests/parser/test_compound.c tests/typechecker/test_typechecker.c tests/vm/test_vm.c tests/vm/test_locals.c tests/vm/test_gc.c $LIB_SOURCES"
 
 # --- Compilation Step ---
 
