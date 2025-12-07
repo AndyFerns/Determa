@@ -701,48 +701,51 @@ ObjFunction* compile_ast(struct AstNode* ast) {
  * @param fn 
  */
 static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
-    // 1. Create new function object
-    ObjFunction* function = new_function();
-    function->arity = fn->param_count;
-    function->name = copy_string(fn->name.lexeme, fn->name.length);
 
-    // 2. Create new compiler for this function
+    // Step 1: Create a sub-compiler for the function
     Compiler sub;
-    sub.function = function;
-    sub.hadError = 0;
+    sub.function = new_function();
+    sub.function->arity = fn->param_count;
+
+    // Set the name (important for debugging!)
+    sub.function->name = copy_string(fn->name.lexeme, fn->name.length);
+
     sub.localCount = 0;
     sub.scopeDepth = 0;
+    sub.hadError = 0;
 
-    // First local is always function name / "this" placeholder (depends on language)
-    // For your language, store an empty local so parameters start at index 1
-    sub.locals[sub.localCount++] = (Local){ .name = fn->name, .depth = 0 };
-
-    Compiler* old = current;
+    Compiler* enclosing = current;
     current = &sub;
 
-    // 3. Add function parameters as locals
+    // Step 2: Begin scope for parameters
     begin_scope(&sub);
+
+    // Add parameters as locals
     for (int i = 0; i < fn->param_count; i++) {
         add_local(&sub, fn->params[i]);
+        sub.function->arity++;
     }
 
-    // 4. Compile function body
+    // Step 3: Compile the function body
     compile_statement(&sub, fn->body);
 
-    // 5. End function with OP_RETURN
-    emit_byte(&sub, OP_NIL, fn->node.line);
     emit_byte(&sub, OP_RETURN, fn->node.line);
 
-    // Restore outer compiler
-    current = old;
+    current = enclosing;
 
-    // 6. Add the function object as constant
-    int index = add_constant(current_chunk(), OBJ_VAL(function));
+    // Step 4: Emit the function object as a constant
+    emit_constant(compiler, OBJ_VAL(sub.function), fn->node.line);
 
-    // 7. Emit function creation opcode
-    emit_byte(compiler, OP_CLOSURE, fn->node.line);
-    emit_byte(compiler, index, fn->node.line);
+    // Step 5: Bind function name to a global variable
+    int globalIndex = define_global(compiler, fn->name);
+
+    emit_byte(compiler, OP_SET_GLOBAL, fn->node.line);
+    emit_byte(compiler, (uint8_t)globalIndex, fn->node.line);
+
+    // Pop compiled function (optional, cleanup)
+    emit_byte(compiler, OP_POP, fn->node.line);
 }
+
 
 
 
