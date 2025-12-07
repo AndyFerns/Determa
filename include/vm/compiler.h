@@ -13,7 +13,7 @@
 #define VM_COMPILER_H
 
 #include "vm/chunk.h"
-// We will include ast.h in the .c file to decouple
+#include "vm/object.h"
 
 // Forward declaration
 struct AstNode;
@@ -31,12 +31,25 @@ void init_compiler();
  * @param chunk The chunk to write bytecode into.
  * @return 1 on success, 0 on error.
  */
-int compile_ast(struct AstNode* ast, Chunk* chunk);
+ObjFunction* compile_ast(struct AstNode* ast);
+
+/**
+ * @brief Compiles source code into a Function Object.
+ * Handles parsing internally.
+ * @param source The source code string.
+ * @return A new ObjFunction containing the bytecode, or NULL on error.
+ */
+ObjFunction* compile(const char* source);
 
 /**
  * @brief Function to mark compiler roots and use it in garbage collection and garbage deletion
- * 
  */
 void mark_compiler_roots();
+
+/**
+ * @brief Function to free all globals once compilation is done
+ * call on shutdown or before resetting the compiler
+ */
+void free_global_symbols();
 
 #endif // VM_COMPILER_H
