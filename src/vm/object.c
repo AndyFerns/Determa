@@ -73,6 +73,24 @@ ObjString* take_string(char* chars, int length) {
     return allocate_string(chars, length);
 }
 
+/**
+ * @brief Helper function to deal with string concatenation
+ * 
+ * @param a First string to be concatenated
+ * @param b Second String to be concatenated
+ * @return ObjString* 
+ */
+ObjString* concatenate(ObjString* a, ObjString* b) {
+    int length = a->length + b->length;
+
+    char* chars = ALLOCATE(char, length + 1);
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length, b->chars, b->length);
+    chars[length] = '\0';
+
+    return take_string(chars, length);
+}
+
 
 ObjFunction* new_function() {
     ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
