@@ -480,19 +480,24 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
 
         // handle function calls
         case NODE_CALL: {
+            // Push objects in the format [...] func arg1 arg2 ... CALL_INSTR
+            // Translates to [...] ObjFunction* arg1 arg2 ... OP_CALL
             AstNodeCall* n = (AstNodeCall*)expr;
 
-            // 1. Compile the callee expression (var access or nested calls)
-            AstNodeVarAccess tmp = {
-                .node = { 
-                    .type = NODE_VAR_ACCESS, 
-                    .line = expr->line 
-                },
-                .name = n->callee
-            };
-            compile_expression(compiler, (AstNode*)&tmp);
+            // 1. Resolve the function name (callee)
+            int globalIndex = resolve_global(compiler, n->callee);
+            if (globalIndex == -1) {
+                fprintf(stderr, "Compiler Error: Undefined function '%.*s'\n",
+                    n->callee.length, n->callee.lexeme);
+                compiler->hadError = 1;
+                return;
+            }
 
-            // 2. Compile each argument (in order)
+            // 2. Push the function object FIRST
+            emit_byte(compiler, OP_GET_GLOBAL, expr->line);
+            emit_byte(compiler, (uint8_t)globalIndex, expr->line);
+
+            // 3. Push arguments in order
             for (int i = 0; i < n->arg_count; i++) {
                 compile_expression(compiler, n->args[i]);
             }
@@ -500,6 +505,7 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
             // 3. Emit call instruction: OP_CALL <arg_count>
             emit_byte(compiler, OP_CALL, expr->line);
             emit_byte(compiler, (uint8_t)n->arg_count, expr->line);
+
             break;
         }
 
