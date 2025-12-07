@@ -48,7 +48,9 @@ typedef struct {
     Lexer lexer;
     Token current;
     Token previous;
+
     int had_error;
+    int inside_func;    // 0 = outside func, 1 = inside func 
     // We will add a 'panic_mode' flag later for error recovery
 } Parser;
 
@@ -625,7 +627,13 @@ static AstNode* parse_while_statement(Parser* parser) {
  * @return AstNode* 
  */
 static AstNode* parse_return_statement(Parser* parser) {
-    TRACE_ENTER("ReturnStmt"); int line = parser->previous.line;
+    TRACE_ENTER("ReturnStmt"); 
+    
+    if (!parser->inside_func) {
+        error_at_current(parser, "Return outside function");
+    }
+
+    int line = parser->previous.line;
     AstNode* val = NULL;
     if (!check(parser, TOKEN_SEMICOLON)) val = parse_expression(parser);
     consume(parser, TOKEN_SEMICOLON, "Expected ';' after return value");
@@ -643,10 +651,16 @@ static AstNode* parse_return_statement(Parser* parser) {
  */
 static AstNode* parse_function_declaration(Parser* parser) {
     TRACE_ENTER("FuncDecl"); int line = parser->previous.line;
+    
     consume(parser, TOKEN_ID, "Expected function name"); Token name = parser->previous;
     consume(parser, TOKEN_LPAREN, "Expected '('");
     
     int cap = 4, count = 0;
+
+    // flag to keep track of return value in function state
+    int old_in_function = parser->inside_func;
+    parser->inside_func = 1;
+
     Token* params = malloc(sizeof(Token) * cap);
     if (!check(parser, TOKEN_RPAREN)) {
         do {
@@ -668,6 +682,10 @@ static AstNode* parse_function_declaration(Parser* parser) {
     
     consume(parser, TOKEN_LEFT_BRACE, "Expected '{'");
     AstNode* body = parse_block(parser);
+
+    // flip the value of inside_function
+    parser->inside_func = old_in_function;
+
     TRACE_EXIT("FuncDecl");
     return new_func_decl_node(name, params, count, retType, body, line);
 }
