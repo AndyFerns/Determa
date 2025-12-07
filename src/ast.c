@@ -335,6 +335,13 @@ void free_ast(AstNode* node) {
             break;
         }
 
+        case NODE_FUNC_DECL: {
+            AstNodeFuncDecl* fn = (AstNodeFuncDecl*)node;
+            free(fn->params);
+            free_ast(fn->body);
+            break;
+        }
+
         // We will add more cases here
         default:
             // No-op
