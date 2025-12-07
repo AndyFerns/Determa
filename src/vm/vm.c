@@ -261,18 +261,35 @@ static InterpretResult run() {
             push(INT_VAL(a op b)); \
         } while (0)
 
+    // Helper macro to assist with debugging stack operations and value pushing
+
+    #define DEBUG_STACK() \
+    do { \
+        printf("STACK: "); \
+        for (Value* s = vm.stack; s < vm.stackTop; s++) { \
+            print_value(*s); \
+            printf(" | "); \
+        } \
+        printf("\n"); \
+    } while(0)
+
     for (;;) {
+        // uncomment for viewing stack operations
+        // DEBUG_STACK();
+        // printf("OP: %d\n", *FRAME().ip);
 
         #ifdef DEBUG_TRACE_EXECUTION
                 printf("          ");
-                for (Value* slot = stack; slot < stackTop; slot++) {
+                for (Value* slot = vm.stack; slot < stackTop; slot++) {
                     printf("[ ");
                     print_value(*slot);
                     printf(" ]");
                 }
                 printf("\n");
 
-                printf("IP %04ld: Opcode %d\n", (long)(ip - vm.chunk->code), *ip);
+                printf("IP %04ld: Opcode %d\n", 
+                        (long)(FRAME().ip - FRAME().function->chunk.code), 
+                        *FRAME().*ip);
         #endif
 
         uint8_t instruction = READ_BYTE();
@@ -423,7 +440,7 @@ static InterpretResult run() {
                     ObjString* result = concatenate(a, b);
                     
                     push(OBJ_VAL(result));
-                    break;; // important not to fall through to int step afterwards
+                    break; // important not to fall through to int step afterwards
                 }
 
                 // Integer Addition
@@ -495,17 +512,31 @@ static InterpretResult run() {
             }
 
             case OP_RETURN: {
+                // 1. Pop the function's return value (top of stack inside the function)
                 Value result = pop();
+
+                // 2. Grab the current frame BEFORE popping it
+                CallFrame* frame = &FRAME();
+
+                // 3. Pop this call frame
                 vm.frameCount--;
 
+                // 4. If we just returned from the top-level script, we're done
                 if (vm.frameCount == 0) {
-                    // No caller to receive the value -> just stop and break
+                    // Optionally discard the script function & reset stack
+                    // (depends on how you want REPL results to behave)
+                    vm.stackTop = vm.stack;
                     return INTERPRET_OK;
                 }
 
-                // Discard the CallFrame's locals from the stack
-                vm.stackTop = FRAME().slots;
-                push(result); // Push the return value
+                // 5. Discard callee + args + locals:
+                //    shrink stack back to the callee slot of this frame
+                vm.stackTop = frame->slots;
+
+                // 6. Push the return value in their place (overwriting callee slot)
+                push(result);
+
+                // 7. Continue running caller frame (FRAME() now refers to the caller)
                 break;
             }
         }
@@ -513,9 +544,11 @@ static InterpretResult run() {
 
     #undef READ_BYTE
     #undef READ_SHORT
-    #undef READ_BYTE
     #undef READ_CONSTANT
     #undef BINARY_OP
+    #undef FRAME
+    #undef PEEK
+    #undef DEBUG_STACK
 }
 
 /**
