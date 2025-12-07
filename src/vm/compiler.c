@@ -711,6 +711,8 @@ static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
     // Step 1: Create a sub-compiler for the function
     Compiler sub;
     sub.function = new_function();
+
+    // Function arity = number of parameters (only once!!!!!)
     sub.function->arity = fn->param_count;
 
     // Set the name (important for debugging!)
@@ -723,22 +725,34 @@ static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
     Compiler* enclosing = current;
     current = &sub;
 
-    // Step 2: Begin scope for parameters
-    begin_scope(&sub);
+    // ---------------------------------------
+    // Reserve local slot 0 for the function itself
+    // (matches VM call() stack layout)
+    // ---------------------------------------
+    {
+        Local* local = &sub.locals[sub.localCount++];
+        local->name.lexeme = "";   // dummy name
+        local->name.length = 0;
+        local->depth = 0;
+    }
 
-    // Add parameters as locals
+    // Step 2: Begin scope for parameters
+    begin_scope(&sub); // scopeDepth = 1
+
+    // Add parameters as locals -> they will be at slots 1..arity
     for (int i = 0; i < fn->param_count; i++) {
         add_local(&sub, fn->params[i]);
-        sub.function->arity++;
+        // sub.function->arity++; No need to increment arity twice
     }
 
     // Step 3: Compile the function body
     compile_statement(&sub, fn->body);
 
-    emit_byte(&sub, OP_RETURN, fn->node.line);
+    emit_byte(&sub, OP_RETURN, fn->node.line); // Ensure function ends with a return
 
-    current = enclosing;
+    current = enclosing; // Restore enclosing compiler
 
+    
     // Step 4: Emit the function object as a constant
     emit_constant(compiler, OBJ_VAL(sub.function), fn->node.line);
 
