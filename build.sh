@@ -15,7 +15,7 @@ TEST_RUNNER_EXE="bin/determa_test"
 # --- Source Files ---
 
 # 1. Core Library
-LIB_SOURCES="src/lexer.c src/token.c src/parser.c src/ast.c src/symbol.c src/typechecker.c src/vm/chunk.c src/vm/vm.c src/vm/compiler.c src/vm/value.c src/vm/object.c src/vm/memory.c"
+LIB_SOURCES="src/lexer.c src/token.c src/parser.c src/ast.c src/cli.c src/symbol.c src/typechecker.c src/vm/chunk.c src/vm/vm.c src/vm/compiler.c src/vm/value.c src/vm/object.c src/vm/memory.c"
 
 # 2. Compiler Source
 COMPILER_SOURCES="src/main.c $LIB_SOURCES"

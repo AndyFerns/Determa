@@ -26,7 +26,8 @@ SET FRONTEND_SOURCES= ^
     src\parser.c ^
     src\ast.c ^
     src\symbol.c ^
-    src\typechecker.c
+    src\typechecker.c ^
+    src\cli.c
 
 REM 2. Backend (VM, Bytecode, Compiler) - In src/vm/
 REM Note: These files don't exist yet, but we are prepping for them!
