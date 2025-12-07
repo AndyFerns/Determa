@@ -52,12 +52,12 @@ struct ObjString {
     char* chars;  // Null-terminated C string
 };
 
-typedef struct {
+struct ObjFunction {
     Obj obj;        // Base class state
     int arity;      // Number of parameters
     Chunk chunk;    // the bytecode for This function
     ObjString* name;// Function name (for debugging)
-} ObjFunction;
+};
 
 
 // --- Macros for casting ---
@@ -80,6 +80,14 @@ ObjString* copy_string(const char* chars, int length);
  * @brief Takes ownership of a string constant (for future optimization).
  */
 ObjString* take_string(char* chars, int length);
+
+/**
+ * @brief Helper function which deals with concatenation of two strings
+ * 
+ * @return ObjString* 
+ */
+ObjString* concatenate(ObjString* a, ObjString* b);
+
 
 /**
  * @brief Creates a new Function object by parsing the bytecode chunk
