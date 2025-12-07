@@ -335,12 +335,45 @@ void free_ast(AstNode* node) {
             break;
         }
 
+        /**
+         * =============================================
+         * FUNCTION DECLARATION BLOCK
+         * recursively free the declaration block of 
+         * any parameters and the body inside the block
+         * ============================================= */
         case NODE_FUNC_DECL: {
             AstNodeFuncDecl* fn = (AstNodeFuncDecl*)node;
             free(fn->params);
             free_ast(fn->body);
             break;
         }
+        
+        /**
+         * =============================================
+         * RETURN NODE
+         * only free the return value of the return node
+         * ============================================= */
+        case NODE_RETURN: {
+            AstNodeReturn* r = (AstNodeReturn*)node;
+            free_ast(r->value);
+            break;
+        }
+
+        /**
+         * =============================================
+         * FUNCTION CALL BLOCK
+         * iteratively free the function call block of 
+         * any arguments and free the callStack once done
+         * ============================================= */
+        case NODE_CALL: {
+            AstNodeCall* call = (AstNodeCall*)node;
+            for (int i = 0; i < call->arg_count; i++) {
+                free_ast(call->args[i]);
+            }
+            free(call->args);
+            break;
+        }
+
 
         // We will add more cases here
         default:
