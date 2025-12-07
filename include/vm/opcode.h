@@ -17,6 +17,7 @@ typedef enum {
     OP_CONSTANT,     // Load a constant from the pool. [OP_CONSTANT] [INDEX]
     OP_TRUE,         // Push True
     OP_FALSE,        // Push False
+    OP_NIL,          // Push nil (for returns with no values)
 
     // --- Arithmetic ---
     OP_ADD,          // Pop 2, Add, Push result
@@ -46,6 +47,7 @@ typedef enum {
     OP_LOOP,          // Unconditional Jump (Backward)
 
     OP_CALL,          // Function call opcode
+    OP_CLOSURE,       // Create new ObjFunction and push it onto the stack
 
     // --- Statements ---
     OP_PRINT,        // Pop 1, Print it
