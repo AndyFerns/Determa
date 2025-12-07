@@ -18,10 +18,10 @@
 #include "ast.h"   
 #include "typechecker.h"
 #include "vm/common.h"
-#include "vm/chunk.h"
 #include "vm/vm.h"
 #include "vm/compiler.h"
 #include "colours.h"
+#include "cli.h"
 
 // Version v0.2 Cedar
 #define VERSION_MAJOR 0
@@ -39,95 +39,38 @@ typedef struct {
 
 static CliConfig config = {0, 0, 0, NULL};
 
-
-// --- UX Helpers ---
-
-/**
- * @brief Print a standardized error message to stderr and exit.
- */
-static void cli_error(const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    fprintf(stderr, B_RED "Error: " RESET);
-    vfprintf(stderr, fmt, args);
-    fprintf(stderr, "\n");
-    va_end(args);
-    exit(1); // Non-zero exit code for failure
-}
-
-/**
- * @brief Print a standardized warning message.
- */
-static void cli_warn(const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    printf(YELLOW "Warning: " RESET);
-    vprintf(fmt, args);
-    printf("\n");
-    va_end(args);
-}
-
-/**
- * @brief Print a success/info message.
- */
-static void cli_info(const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    printf(CYAN "=> " RESET);
-    vprintf(fmt, args);
-    printf("\n");
-    va_end(args);
-}
-
-static void print_version() {
-    printf(B_CYAN "Determa" RESET " v%d.%d '%s'\n", VERSION_MAJOR, VERSION_MINOR, VERSION_NAME);
-    printf(GRAY "A statically-typed, garbage-collected language.\n" RESET);
-}
-
-static void print_help() {
-    print_version();
-    printf("\n");
-    printf(BOLD "USAGE:\n" RESET);
-    printf("  determa [options] [file]\n");
-    printf("\n");
-    printf(BOLD "OPTIONS:\n" RESET);
-    printf("  " GREEN "-h, --help" RESET "        Show this help message.\n");
-    printf("  " GREEN "-v, --version" RESET "     Show version information.\n");
-    printf("  " GREEN "-d, --pda-debug" RESET "   Enable Parser/PDA stack trace logging.\n");
-    printf("\n");
-    printf(BOLD "EXAMPLES:\n" RESET);
-    printf("  " cyan("determa") "                  Start Interactive REPL\n");
-    printf("  " cyan("determa script.det") "       Run a script file\n");
-    printf("  " cyan("determa -d script.det") "    Run with debug mode\n");
-    printf("\n");
-}
-
 // --- Core Pipeline ---
 
 static void run_source(const char* source) {
-    // 1. Parse
+ // 1. Parse
     AstNode* ast = parse(source, config.pda_debug);
 
-    if (ast != NULL) {
-        // 2. Type Check
-        if (typecheck_ast(ast)) {
-             // 3. Compile
-             Chunk chunk;
-             init_chunk(&chunk);
-             
-             if (compile_ast(ast, &chunk)) {
-                 // 4. Run
-                 interpret(&chunk);
-             } else {
-                 // Compiler errors are printed inside compile_ast
-                 // We don't exit here to allow REPL to continue
-             }
-             free_chunk(&chunk);
-        } 
-        // TypeChecker prints its own errors
+    if (ast == NULL) {
+        // Parser already printed errors
+        return;
+    }
+
+    // 2. Type Check
+    if (!typecheck_ast(ast)) {
+        // Typechecker prints its own errors
         free_ast(ast);
-    } 
-    // Parser prints its own errors
+        return;
+    }
+
+    // 3. Compile AST into a function object
+    ObjFunction* function = compile_ast(ast);  // <-- new API
+
+    if (function == NULL) {
+        // Compiler printed its own errors
+        free_ast(ast);
+        return;
+    }
+
+    // 4. Run on the VM
+    interpret(function);
+
+    // 5. Cleanup AST (the function is now owned by the VM/GC)
+    free_ast(ast);
 }
 
 static char* read_file_contents(const char* path) {
