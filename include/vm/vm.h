@@ -15,18 +15,35 @@
 #define STACK_MAX 256
 // Maximum number of global variables allowed in a script
 #define GLOBALS_MAX 256 
+// Max recursion depth
+#define FRAMES_MAX 64 
+
+/**
+ * @brief It represents a single function call in the stack
+ * @struct CallFrame 
+ */
+typedef struct {
+    ObjFunction* function; // The function being run
+    uint8_t* ip;           // Instruction pointer *inside* that function's chunk
+    Value* slots;          // Pointer to the start of this frame's local variables on the stack
+} CallFrame;
 
 /**
  * @struct VM
  * @brief The Virtual Machine state.
  */
 typedef struct {
-    Chunk* chunk;               // The chunk of bytecode being executed
-    uint8_t* ip;                // Instruction Pointer (points to next byte to read)
-    Value stack[STACK_MAX];     // The operand stack
-    Value* stackTop;            // Points to the top of the stack
-    Value globals[GLOBALS_MAX]; // Compiler resolves names ("x") to indices (0) and stores it here
-    Obj* objects;               // Object Tracking: stores the Head of the linked list of all allocated objects
+    //  Moved to CallFrame
+    // Chunk* chunk;               // The chunk of bytecode being executed
+    // uint8_t* ip;                // Instruction Pointer (points to next byte to read)
+    
+    CallFrame frames[FRAMES_MAX];   // Call Stack
+    int frameCount;                 // number of frames
+    
+    Value stack[STACK_MAX];         // The operand stack
+    Value* stackTop;                // Points to the top of the stack
+    Value globals[GLOBALS_MAX];     // Compiler resolves names ("x") to indices (0) and stores it here
+    Obj* objects;                   // Object Tracking: stores the Head of the linked list of all allocated objects
 
     // GC States
     int grayCount;              // Number of objects in the worklist
@@ -61,6 +78,6 @@ Value peek(int distance); // Look at stack without popping
 /**
  * @brief Executes a chunk of bytecode.
  */
-InterpretResult interpret(Chunk* chunk);
+InterpretResult interpret(ObjFunction* function); 
 
 #endif // VM_VM_H
