@@ -45,6 +45,8 @@ typedef enum {
     OP_JUMP_IF_FALSE, // Conditional Jump (Forward)
     OP_LOOP,          // Unconditional Jump (Backward)
 
+    OP_CALL,          // Function call opcode
+
     // --- Statements ---
     OP_PRINT,        // Pop 1, Print it
     OP_RETURN,       // Return from script (stop execution)
