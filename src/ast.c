@@ -262,6 +262,17 @@ void free_ast(AstNode* node) {
             break;
         }
 
+        /**
+         * ========================
+         * UNARY OPERATION
+         * Free only the operand
+         * eg. -5, -int;
+         * ======================== */
+        case NODE_UNARY_OP:
+            AstNodeUnaryOp* n = (AstNodeUnaryOp*)node;
+            free_ast(n->operand);
+            break;
+
         /* ================================
          *  VARIABLE DECLARATION
          *  var x = init;
