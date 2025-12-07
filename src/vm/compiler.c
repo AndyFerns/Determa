@@ -571,6 +571,11 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
             }
             break;
         }
+
+        case NODE_FUNC_DECL: {
+            compile_function_decl(compiler, (AstNodeFuncDecl*)stmt);
+            break;
+        }
         
         case NODE_PRINT_STMT: {
             AstNodePrintStmt* n = (AstNodePrintStmt*)stmt;
