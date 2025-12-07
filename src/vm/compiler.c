@@ -707,8 +707,10 @@ ObjFunction* compile_ast(struct AstNode* ast) {
  * @param fn 
  */
 static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
+    // Step 1: Bind function name to a global variable and forward declare
+    int globalIndex = define_global(compiler, fn->name);
 
-    // Step 1: Create a sub-compiler for the function
+    // Step 2: Create a sub-compiler for the function
     Compiler sub;
     sub.function = new_function();
 
@@ -718,13 +720,12 @@ static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
     // Set the name (important for debugging!)
     sub.function->name = copy_string(fn->name.lexeme, fn->name.length);
 
-    sub.localCount = 0;
     sub.scopeDepth = 0;
     sub.hadError = 0;
-
-    Compiler* enclosing = current;
-    current = &sub;
-
+    
+    
+    
+    sub.localCount = 0;
     // ---------------------------------------
     // Reserve local slot 0 for the function itself
     // (matches VM call() stack layout)
@@ -735,29 +736,34 @@ static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
         local->name.length = 0;
         local->depth = 0;
     }
+    
+    Compiler* enclosing = current;
+    current = &sub;
 
-    // Step 2: Begin scope for parameters
+    // Step 3: Begin scope for parameters
     begin_scope(&sub); // scopeDepth = 1
 
     // Add parameters as locals -> they will be at slots 1..arity
     for (int i = 0; i < fn->param_count; i++) {
         add_local(&sub, fn->params[i]);
-        // sub.function->arity++; No need to increment arity twice
     }
 
-    // Step 3: Compile the function body
+    // Step 4: Compile the function body
     compile_statement(&sub, fn->body);
 
     emit_byte(&sub, OP_RETURN, fn->node.line); // Ensure function ends with a return
 
     current = enclosing; // Restore enclosing compiler
 
-    
-    // Step 4: Emit the function object as a constant
+    // If we had compile errors inside the function, bail out
+    if (sub.hadError) {
+        compiler->hadError = 1;
+        return;
+    }
+
+    // Step 5: Emit the function object as a constant in the outer chunk
     emit_constant(compiler, OBJ_VAL(sub.function), fn->node.line);
 
-    // Step 5: Bind function name to a global variable
-    int globalIndex = define_global(compiler, fn->name);
 
     emit_byte(compiler, OP_SET_GLOBAL, fn->node.line);
     emit_byte(compiler, (uint8_t)globalIndex, fn->node.line);
