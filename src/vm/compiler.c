@@ -58,6 +58,10 @@ typedef struct {
 // required so that the gc can find the constants inside the chunk currently being compiled
 static Compiler* current = NULL;
 
+// --- Forward declarations ---
+static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn);
+
+
 
 /**
  * @brief Helper function to get the current chunk
@@ -459,6 +463,7 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
             break;
         }
 
+        // handle binary operations
         case NODE_BINARY_OP: {
             AstNodeBinaryOp* n = (AstNodeBinaryOp*)expr;
             
@@ -472,6 +477,32 @@ static void compile_expression(Compiler* compiler, AstNode* expr) {
             emit_binary_op(compiler, n->op.type, n->op.line);
             break;
         }
+
+        // handle function calls
+        case NODE_CALL: {
+            AstNodeCall* n = (AstNodeCall*)expr;
+
+            // 1. Compile the callee expression (var access or nested calls)
+            AstNodeVarAccess tmp = {
+                .node = { 
+                    .type = NODE_VAR_ACCESS, 
+                    .line = expr->line 
+                },
+                .name = n->callee
+            };
+            compile_expression(compiler, (AstNode*)&tmp);
+
+            // 2. Compile each argument (in order)
+            for (int i = 0; i < n->arg_count; i++) {
+                compile_expression(compiler, n->args[i]);
+            }
+
+            // 3. Emit call instruction: OP_CALL <arg_count>
+            emit_byte(compiler, OP_CALL, expr->line);
+            emit_byte(compiler, (uint8_t)n->arg_count, expr->line);
+            break;
+        }
+
         
         default:
             fprintf(stderr, "Compiler Error: Unhandled expression node type %d\n", expr->type);
@@ -594,6 +625,20 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
             break;
         }
 
+        case NODE_RETURN: {
+            AstNodeReturn* n = (AstNodeReturn*)stmt;
+
+            if (n->value) {
+                compile_expression(compiler, n->value);
+            } else {
+                emit_byte(compiler, OP_NIL, stmt->line);
+            }
+
+            emit_byte(compiler, OP_RETURN, stmt->line);
+            break;
+        }
+
+
         default:
             fprintf(stderr, "Compiler Error: Unhandled statement node type %d\n", stmt->type);
             compiler->hadError = 1;
@@ -648,6 +693,57 @@ ObjFunction* compile_ast(struct AstNode* ast) {
     }
     return compiler.function;
 }
+
+/**
+ * @brief Function to make the compiler compile function declarations and output to bytecode
+ * 
+ * @param compiler 
+ * @param fn 
+ */
+static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
+    // 1. Create new function object
+    ObjFunction* function = new_function();
+    function->arity = fn->param_count;
+    function->name = copy_string(fn->name.lexeme, fn->name.length);
+
+    // 2. Create new compiler for this function
+    Compiler sub;
+    sub.function = function;
+    sub.hadError = 0;
+    sub.localCount = 0;
+    sub.scopeDepth = 0;
+
+    // First local is always function name / "this" placeholder (depends on language)
+    // For your language, store an empty local so parameters start at index 1
+    sub.locals[sub.localCount++] = (Local){ .name = fn->name, .depth = 0 };
+
+    Compiler* old = current;
+    current = &sub;
+
+    // 3. Add function parameters as locals
+    begin_scope(&sub);
+    for (int i = 0; i < fn->param_count; i++) {
+        add_local(&sub, fn->params[i]);
+    }
+
+    // 4. Compile function body
+    compile_statement(&sub, fn->body);
+
+    // 5. End function with OP_RETURN
+    emit_byte(&sub, OP_NIL, fn->node.line);
+    emit_byte(&sub, OP_RETURN, fn->node.line);
+
+    // Restore outer compiler
+    current = old;
+
+    // 6. Add the function object as constant
+    int index = add_constant(current_chunk(), OBJ_VAL(function));
+
+    // 7. Emit function creation opcode
+    emit_byte(compiler, OP_CLOSURE, fn->node.line);
+    emit_byte(compiler, index, fn->node.line);
+}
+
 
 
 // /**
