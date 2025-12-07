@@ -3,8 +3,15 @@
  * @brief Implementation of the Virtual Machine execution loop.
  *
  * This module contains stack manipulation utilities, the main interpreter loop,
- * and helper macros used for bytecode execution. The VM is a simple stack-based
- * registerless interpreter similar to Lox/Wren-style VMs.
+ * and helper macros used for bytecode execution. 
+ * 
+ * The VM is a simple stack-based registerless interpreter 
+ * similar to Lox/Wren-style VMs.
+ * 
+ * Design:
+ *  - Values are on a single operand stack (vm.stack).
+ *  - Each CallFrame describes one active function call.
+ *  - frame->slots points into the stack where that frame's locals start.
  */
 
 #include <stdio.h>
@@ -23,6 +30,11 @@
 // The global VM instance (single VM model)
 VM vm;
 
+
+/* ============================
+ *  Stack & VM Initialization
+ * ============================ */
+
 /**
  * @brief Reset the VM operand stack to an empty state.
  */
@@ -32,9 +44,11 @@ static void reset_stack() {
 }
 
 /**
- * @brief Initialize the VM (reset stack, clear state).
+ * @brief Initialize the VM 
+ * 
+ * (stack, GC state, object list).
  */
-void init_vm() {
+void init_vm(void) {
     reset_stack();
     vm.objects = NULL; // Initialize the tracker list
 
@@ -60,11 +74,12 @@ void free_vm() {
 
     // Free the gray stack
     free(vm.grayStack);
+    vm.grayStack = NULL;
 }
 
-// -----------------------------------------------------------------------------
+// ====================
 // Stack Operations
-// -----------------------------------------------------------------------------
+// ====================
 
 /**
  * @brief Push a value onto the VM stack.
@@ -77,7 +92,7 @@ void push(Value value) {
     // (no behavior change unless the stack overflows)
 #ifdef VM_STACK_CHECK
     if (vm.stackTop - vm.stack >= STACK_MAX) {
-        fprintf(stderr, "Stack overflow!\n");
+        fprintf(stderr, "VM Error: Stack overflow.\n");
         return;
     }
 #endif
@@ -104,10 +119,16 @@ Value peek(int distance) {
     return vm.stackTop[-1 - distance];
 }
 
-// --- Runtime Error Helper ---
+
+/* ============================
+ *  Runtime Error & Calls
+ * ============================ */
+
 
 /**
  * @brief Prints out the error message to the terminal during function runtime
+ * 
+ * Unwind the VM and Includes a simple stack-trace by walking CallFrames.
  * 
  * @param format 
  */
@@ -122,8 +143,12 @@ static void runtimeError(const char* format, ...) {
     for (int i = vm.frameCount - 1; i >= 0; i--) {
         CallFrame* frame = &vm.frames[i];
         ObjFunction* function = frame->function;
-        size_t instruction = frame->ip - function->chunk.code - 1;
-        fprintf(stderr, "[line %d] in ", function->chunk.lines[instruction]);
+
+        // IP points *past* current instruction, step back one
+        size_t instruction = (size_t)(frame->ip - function->chunk.code - 1);
+        int line = function->chunk.lines[instruction];
+
+        fprintf(stderr, "[line %d] in ", line);
         if (function->name == NULL) {
             fprintf(stderr, "script\n");
         } else {
@@ -135,10 +160,13 @@ static void runtimeError(const char* format, ...) {
 }
 
 /**
- * @brief method to handle function calls inside blocks
+ * @brief Call a function object with a given number of arguments.
  * 
- * @param function 
- * @param argCount 
+ * Stack layout when this is called:
+ *   [... previous values ...] [callee] [arg1] [arg2] ... [argN]
+ * 
+ * @param function ObjFunction to call
+ * @param argCount number of arguments on top of the stack
  * @return true 
  * @return false 
  */
@@ -156,6 +184,7 @@ static bool call(ObjFunction* function, int argCount) {
     CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->function = function;
     frame->ip = function->chunk.code;
+
     // The slots start at where the arguments are on the stack
     frame->slots = vm.stackTop - argCount - 1; // -1 for the function itself (which is slot 0)
     return true;
@@ -175,6 +204,8 @@ static bool callValue(Value callee, int argCount) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_FUNCTION: 
                 return call(AS_FUNCTION(callee), argCount);
+
+            // Add more cases in the future for Closures, Classes, Objects etc
             default:
                 break; // Non-callable object
         }
@@ -189,6 +220,11 @@ static bool callValue(Value callee, int argCount) {
 // -----------------------------------------------------------------------------
 
 /**
+ * @brief Helper macro: current frame.
+ */
+#define FRAME() (vm.frames[vm.frameCount - 1])
+
+/**
  * @brief Execute bytecode instructions until OP_RETURN.
  *
  * @return InterpretResult The final interpreter state.
@@ -199,11 +235,10 @@ static bool callValue(Value callee, int argCount) {
  * optimization pattern.
  */
 static InterpretResult run() {
-    // Switching from chunk-based interpretation to Frame (function) based
-    #define FRAME() (vm.frames[vm.frameCount - 1]) 
-
     // Read macros using local cached registers
     #define READ_BYTE() (*FRAME().ip++)
+
+    // Read a constant from the current function's constant pool
     #define READ_CONSTANT() (FRAME().function->chunk.constants.values[READ_BYTE()])
 
     // Macro to Read 16-bit operand (Big Endian)
@@ -243,11 +278,20 @@ static InterpretResult run() {
         uint8_t instruction = READ_BYTE();
 
         switch (instruction) {
+            /* --- Constants & literals --- */
 
             case OP_CONSTANT: {
                 push(READ_CONSTANT());
                 break;
             }
+
+            // Conditional and equivalance logic;
+            case OP_TRUE:  push(BOOL_VAL(true)); break;
+
+            case OP_FALSE: push(BOOL_VAL(false)); break;
+
+
+            /* --- Globals --- */
 
             // Global variable logic
             case OP_GET_GLOBAL: {
@@ -265,6 +309,8 @@ static InterpretResult run() {
                 break;
             }
 
+
+            /* -- Locals --- */
             case OP_GET_LOCAL: {
                 uint8_t slot = READ_BYTE(); //Access the stack directly at the given index
                 push(FRAME().slots[slot]); // relative to frame addressing
@@ -278,17 +324,17 @@ static InterpretResult run() {
                 break;
             }
 
-            // Conditional and equivalance logic;
-            case OP_TRUE:  push(BOOL_VAL(true)); break;
-            case OP_FALSE: push(BOOL_VAL(false)); break;
 
-            // --- Stack Cleanup ---
+            /* --- Stack Cleanup --- */
+
             case OP_POP: {
                 pop();
                 break;
             }
 
-            // --- Control Flow ---
+
+            /* --- Control Flow --- */
+
             case OP_JUMP: {
                 uint16_t offset = READ_SHORT();
                 FRAME().ip += offset;
@@ -311,6 +357,8 @@ static InterpretResult run() {
                 break;
             }
 
+            /* --- Calls --- */
+
             case OP_CALL: {
                 uint8_t argCount = READ_BYTE();
                 // The function object is at stackTop - argCount - 1
@@ -322,7 +370,7 @@ static InterpretResult run() {
                 break;
             }
 
-            // --- Conditional Ops ---
+            /* --- Comparisons & Logic --- */
             case OP_EQUAL: {
                 Value b = pop();
                 Value a = pop();
@@ -362,14 +410,20 @@ static InterpretResult run() {
                 break;
             }
 
+            /* --- Arithmetic --- */
+
             case OP_ADD: {
                 // Use PEEK macro instead of peek() function
                 if (IS_STRING(PEEK(0)) && IS_STRING(PEEK(1))) {
                     // String Concatenation
                     ObjString* b = AS_STRING(pop());
                     ObjString* a = AS_STRING(pop());
+
+                    // Concatenate the strings
+                    ObjString* result = concatenate(a, b);
                     
-                    push(OBJ_VAL(concatenate(a, b)));
+                    push(OBJ_VAL(result));
+                    break;; // important not to fall through to int step afterwards
                 }
 
                 // Integer Addition
@@ -393,13 +447,15 @@ static InterpretResult run() {
                     runtimeError("Operands must be numbers.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                int b = AS_INT(PEEK(0)); // Peek
-                if (b == 0) {
+                int divisor = AS_INT(PEEK(0)); // Peek
+                if (divisor == 0) {
                     runtimeError("Division by zero.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 // Now safe to pop and divide
-                BINARY_OP(/);
+                int b = AS_INT(pop());
+                int a = AS_INT(pop());
+                push(INT_VAL(a / b));
                 break;
             }
 
@@ -408,12 +464,14 @@ static InterpretResult run() {
                     runtimeError("Operands must be numbers.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                int b = AS_INT(PEEK(0)); 
-                if (b == 0) {
+                int divisor = AS_INT(PEEK(0)); 
+                if (divisor == 0) {
                     runtimeError("Modulo by zero.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                BINARY_OP(%);
+                int b = AS_INT(pop());
+                int a = AS_INT(pop());
+                push(INT_VAL(a % b));
                 break;
             }
 
@@ -423,7 +481,8 @@ static InterpretResult run() {
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 // Unwrap, Negate, Wrap back
-                push(INT_VAL(-AS_INT(pop())));
+                int value = AS_INT(pop());
+                push(INT_VAL(-value));
                 break;
             }
 
@@ -440,7 +499,7 @@ static InterpretResult run() {
                 vm.frameCount--;
 
                 if (vm.frameCount == 0) {
-                    pop(); // Pop the script function
+                    // No caller to receive the value -> just stop and break
                     return INTERPRET_OK;
                 }
 
