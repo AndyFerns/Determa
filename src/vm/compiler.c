@@ -21,6 +21,7 @@
 #include "vm/memory.h" // Needed for mark_value
 #include "ast.h"
 #include "token.h"
+#include "parser.h"
 
 
 // This exists ONLY during compilation to map "x" -> 0.
@@ -42,7 +43,8 @@ typedef struct {
 
 // State for the compiler
 typedef struct {
-    Chunk* chunk;
+    // Chunk* chunk; // removed as its a part of function now
+    ObjFunction* function;
     int hadError;
 
     // Local tracking
@@ -58,6 +60,15 @@ static Compiler* current = NULL;
 
 
 /**
+ * @brief Helper function to get the current chunk
+ * 
+ * @return Chunk* 
+ */
+static Chunk* current_chunk() {
+    return &current->function->chunk;
+}
+
+/**
  * @brief Function to mark all constants in the chunk currently being compiled
  * Prevents the GC from deleting strings just created but not compiled yet
  * 
@@ -66,7 +77,7 @@ static Compiler* current = NULL;
 void mark_compiler_roots() {
     if (current == NULL) return;
     
-    Chunk* chunk = current->chunk;
+    Chunk* chunk = current_chunk();
     for (int i = 0; i < chunk->constants.count; i++) {
         mark_value(chunk->constants.values[i]);
     }
@@ -92,7 +103,8 @@ void init_compiler(void) {
  * @brief Emits a single byte (OpCode) to the chunk.
  */
 static void emit_byte(Compiler* compiler, uint8_t byte, int line) {
-    write_chunk(compiler->chunk, byte, line);
+    (void)compiler;
+    write_chunk(current_chunk(), byte, line);
 }
 
 /**
@@ -108,7 +120,7 @@ static void emit_bytes(Compiler* compiler, uint8_t byte1, uint8_t byte2, int lin
  */
 static void emit_constant(Compiler* compiler, Value value, int line) {
     // 1. Add the actual value to the constant pool
-    int constantIndex = add_constant(compiler->chunk, value);
+    int constantIndex = add_constant(current_chunk(), value);
 
     if (constantIndex < 0) {
         fprintf(stderr, "Compiler Error: failed to add constant (index < 0)\n");
@@ -140,7 +152,7 @@ static void emit_constant(Compiler* compiler, Value value, int line) {
 static int emit_jump(Compiler* compiler, uint8_t instruction, int line) {
     emit_byte(compiler, instruction, line);
     emit_bytes(compiler, 0xff, 0xff, line); // helper to emit 2 placeholder bytes
-    return compiler->chunk->count - 2;
+    return current_chunk()->count - 2;
 }
 
 
@@ -152,15 +164,15 @@ static int emit_jump(Compiler* compiler, uint8_t instruction, int line) {
  */
 static void patch_jump(Compiler* compiler, int offset) {
     // -2 to adjust for the jump offset itself
-    int jump = compiler->chunk->count - offset - 2;
+    int jump = current_chunk()->count - offset - 2;
 
     if (jump > UINT16_MAX) {
         fprintf(stderr, "Too much code to jump over.\n");
         compiler->hadError = 1;
     }
 
-    compiler->chunk->code[offset] = (jump >> 8) & 0xff;
-    compiler->chunk->code[offset + 1] = jump & 0xff;
+    current_chunk()->code[offset] = (jump >> 8) & 0xff;
+    current_chunk()->code[offset + 1] = jump & 0xff;
 }
 
 /**
@@ -173,7 +185,7 @@ static void patch_jump(Compiler* compiler, int offset) {
 static void emit_loop(Compiler* compiler, int loopStart, int line) {
     emit_byte(compiler, OP_LOOP, line);
 
-    int offset = compiler->chunk->count - loopStart + 2;
+    int offset = current_chunk()->count - loopStart + 2;
     if (offset > UINT16_MAX) {
         fprintf(stderr, "Loop body too large.\n");
         compiler->hadError = 1;
@@ -520,7 +532,7 @@ static void compile_statement(Compiler* compiler, AstNode* stmt) {
         // --- While Loop ---
         case NODE_WHILE: {
             AstNodeWhile* n = (AstNodeWhile*)stmt;
-            int loopStart = compiler->chunk->count; // Mark start of loop
+            int loopStart = current_chunk()->count; // Mark start of loop
             
             // 1. Condition
             compile_expression(compiler, n->condition);
@@ -601,35 +613,75 @@ static void compile_program(Compiler* compiler, AstNode* root) {
 /**
  * @brief Public interface to the compiler.
  */
-int compile_ast(struct AstNode* ast, Chunk* chunk) {
+ObjFunction* compile_ast(struct AstNode* ast) {
     Compiler compiler;
-    compiler.chunk = chunk;
+    // compiler.chunk = chunk;
     compiler.hadError = 0;
 
     // Initialize each scope state
     compiler.localCount = 0;
     compiler.scopeDepth = 0;
+
+    compiler.function = new_function();
+
     // set active compiler for gc
     current = &compiler; 
 
     if (ast->type != NODE_PROGRAM) {
         fprintf(stderr, "Compiler Error: AST root must be PROGRAM\n");
-        return 0;
+        return NULL;
     }
-
+    // Call program compilation
     compile_program(&compiler, ast);
 
     // clear active compiler after completed compilation
     current = NULL;
     
     if (compiler.hadError) {
-        // If an error occurred, the chunk is incomplete/corrupt
-        free_chunk(chunk);
-        return 0;
+        // free_object((Obj*) compiler.function);
+        return NULL;
     }
-    return 1;
+    return compiler.function;
 }
 
+
+// /**
+//  * @brief Compiles source code into a Function Object.
+//  * 
+//  * Changed from originally returning the chunk, the chunk based logic is now handled by the function
+//  * 
+//  * Using updated pipeline: source → AST → compile → ObjFunction* → run
+//  * 
+//  * @param source 
+//  * @return ObjFunction* 
+//  */
+// ObjFunction* compile(const char* source) {
+//     // 1. Parse → AST
+//     AstNode* ast = parse(source);
+//     if (ast == NULL) return NULL;
+
+//     // 2. Create compiler state
+//     Compiler compiler;
+//     compiler.function = new_function(); // switching to function based instead of older chunk based
+//     compiler.hadError = 0;
+    
+//     // Init each scope state
+//     compiler.localCount = 0;
+//     compiler.scopeDepth = 0;
+
+//     current = &compiler;
+
+//     // 3. Compile AST into compiler.function->chunk
+//     compile_program(&compiler, ast);
+
+//     current = NULL;
+
+//     if (compiler.hadError) {
+//         return NULL;
+//     }
+
+//     return compiler.function;
+// }
 
 /**
  * @brief Free Global symbols helper function
