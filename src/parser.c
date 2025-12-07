@@ -143,6 +143,31 @@ static int match(Parser* parser, TokenType types[], int count) {
 }
 
 
+// /**
+//  * @brief Standard Panic mode helper function to be called on error
+//  * 
+//  * @param parser 
+//  */
+// static void synchronize(Parser* parser) {
+//     parser->had_error = 0;
+
+//     while (parser->current.type != TOKEN_EOF) {
+//         if (parser->previous.type == TOKEN_SEMICOLON) return;
+
+//         switch (parser->current.type) {
+//             case TOKEN_IF:
+//             case TOKEN_WHILE:
+//             case TOKEN_VAR:
+//             case TOKEN_FUNC:
+//             case TOKEN_RETURN:
+//                 return;
+//         }
+
+//         advance(parser);
+//     }
+// }
+
+
 
 // --- Parsing Functions (The Grammar) ---
 
