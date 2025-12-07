@@ -33,6 +33,15 @@ void mark_object(Obj* object);
  */
 void mark_value(Value value);
 
+
+/**
+ * @brief Function to Mark arrays and values in an arrays (TODO)
+ * 
+ * @param array 
+ */
+void mark_array(ValueArray* array);
+
+
 /**
  * @brief Runs a full garbage collection cycle.
  */
