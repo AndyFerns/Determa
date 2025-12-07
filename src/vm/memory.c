@@ -104,6 +104,18 @@ void mark_value(Value value) {
 }
 
 /**
+ * @brief Function to mark a ValueArray array and increment based on the values in the array
+ * 
+ * @param array 
+ */
+void mark_array(ValueArray* array) {
+    for (int i = 0; i < array->count; i++) {
+        mark_value(array->values[i]);
+    }
+}
+
+
+/**
  * @brief Mark all GC root references.
  *
  * This includes:
@@ -265,5 +277,13 @@ void free_object(Obj* object) {
             reallocate(string, sizeof(ObjString), 0);
             break;
         }
+
+        case OBJ_FUNCTION: {
+            ObjFunction* fn = (ObjFunction*)object;
+            free_chunk(&fn->chunk);
+            free(fn);
+            break;
+        }
+
     }
 }
