@@ -3,6 +3,11 @@
  * @brief Defines the Virtual Machine state and execution interface.
  * 
  * The VM will run in an infinite loop of Fetch -> Decode -> Execute
+ * 
+ * The VM runs a simple stack-based bytecode:
+ *   - Values live on a single operand stack.
+ *   - Each function call has a CallFrame pointing into that stack.
+ *   - Bytecode lives inside ObjFunction->chunk.
  */
 
 #ifndef VM_VM_H
@@ -12,11 +17,9 @@
 #include "value.h" // Value needs to be fully defined
 #include "object.h" // VM needs to know about Objects
 
-#define STACK_MAX 256
-// Maximum number of global variables allowed in a script
-#define GLOBALS_MAX 256 
-// Max recursion depth
-#define FRAMES_MAX 64 
+#define STACK_MAX 256       // Maximum number of global variables allowed in a script
+#define GLOBALS_MAX 256     // Max recursion depth
+#define FRAMES_MAX 64       // Max call depth (number of CallFrames)
 
 /**
  * @brief It represents a single function call in the stack
@@ -33,10 +36,6 @@ typedef struct {
  * @brief The Virtual Machine state.
  */
 typedef struct {
-    //  Moved to CallFrame
-    // Chunk* chunk;               // The chunk of bytecode being executed
-    // uint8_t* ip;                // Instruction Pointer (points to next byte to read)
-    
     CallFrame frames[FRAMES_MAX];   // Call Stack
     int frameCount;                 // number of frames
     
@@ -67,12 +66,13 @@ typedef enum {
 // Expose the global VM instance for testing purposes (inspecting the stack)
 extern VM vm;
 
-void init_vm();
-void free_vm();
+// VM Lifecycle
+void init_vm(void);
+void free_vm(void);
 
 // --- Stack Operations ---
 void push(Value value);
-Value pop();
+Value pop(void);
 Value peek(int distance); // Look at stack without popping
 
 /**
