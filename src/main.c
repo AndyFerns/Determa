@@ -23,10 +23,7 @@
 #include "colours.h"
 #include "cli.h"
 
-// Version v0.2 Cedar
-#define VERSION_MAJOR 0
-#define VERSION_MINOR 2
-#define VERSION_NAME  "Cedar"
+#include "version.h"
 
 // --- Config ---
 
@@ -131,7 +128,7 @@ static void print_repl_help() {
 }
 
 static void run_repl_mode() {
-    printf(B_CYAN "Determa" RESET " v%d.%d '%s' REPL\n", VERSION_MAJOR, VERSION_MINOR, VERSION_NAME);
+    printf(B_CYAN "Determa" RESET " v%d.%d.%d '%s' REPL\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_NAME);
     printf(GRAY "Type 'help' for commands, 'exit' to quit.\n" RESET);
     printf(GRAY "---------------------------------------\n" RESET);
 
