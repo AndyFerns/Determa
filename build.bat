@@ -58,6 +58,7 @@ SET TEST_SOURCES=^
     tests\vm\test_vm.c ^
     tests\vm\test_gc.c^
     tests\vm\test_locals.c^
+    tests\functions\test_functions.c^
     %LIB_SOURCES%
 
 REM --- Compilation Step ---
