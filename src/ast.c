@@ -165,9 +165,10 @@ static void print_ast_recursive(AstNode* node, int indent) {
         }
         
         // add more cases as the AST node implementation grows
-        default:
+        default:{
             printf("UNKNOWN_NODE\n");
             break;
+        }
     }
 }
 
@@ -225,9 +226,9 @@ void free_ast(AstNode* node) {
          *  (No children)
          * ================================ */
         // No children, just free the node
-        case NODE_INT_LITERAL:
+        case NODE_INT_LITERAL:{
             break;
-
+        }
 
         /* ================================
          *  STRING LITERAL
@@ -268,11 +269,12 @@ void free_ast(AstNode* node) {
          * Free only the operand
          * eg. -5, -int;
          * ======================== */
-        case NODE_UNARY_OP:
+        case NODE_UNARY_OP:{
             AstNodeUnaryOp* n = (AstNodeUnaryOp*)node;
             free_ast(n->operand);
             break;
-
+        
+        }
         /* ================================
          *  VARIABLE DECLARATION
          *  var x = init;
