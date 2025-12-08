@@ -2,7 +2,7 @@
  * @file main.c
  * @author Andrew Fernandes
  * @brief Main entry point for the Determa compiler
- * @version v0.2 'Cedar' Dev Build
+ * @version v0.3 'Spruce' Dev Build
  * @date 2025-11-18
  * 
  * @copyright Copyright (c) 2025
