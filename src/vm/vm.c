@@ -523,9 +523,9 @@ static InterpretResult run() {
 
                 // 4. If we just returned from the top-level script, we're done
                 if (vm.frameCount == 0) {
-                    // Optionally discard the script function & reset stack
-                    // (depends on how you want REPL results to behave)
-                    vm.stackTop = vm.stack;
+                    // vm.stackTop = vm.stack;
+                    // push the result back for inspection
+                    push(result);
                     return INTERPRET_OK;
                 }
 
