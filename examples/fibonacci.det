@@ -1,12 +1,13 @@
-func fib(n) : int {
-    if n == 0 {
-        return 0;
-    } elif n == 1 {
-        return 1;
-    } else {
-        return fib(n - 1) + fib(n - 2);
-    }
+func fib(n): int {
+    if n == 0 { return 0; }
+    elif n == 1 { return 1; }
+    else { return fib(n - 1) + fib(n - 2); }
 }
 
-print "Fibonacci Sequence (just fib(10)):";
-print fib(4);
+print "Fibonacci Sequence up to 18:";
+
+var i = 0;
+while i <= 18 {
+    print fib(i);
+    i = i + 1;
+}
