@@ -18,11 +18,17 @@
 #include "test_functions.h"
 #include "typechecker.h" // For init
 #include "vm/compiler.h" // For init
+#include "vm/vm.h"
 
 int main(int argc, char* argv[]) {
     // Suppress unused warnings
     (void)argc; 
     (void)argv;
+
+    // SAFETY: Initialize all global subsystems
+    init_vm();          // Zeros out stack and object list
+    init_typechecker(); // Zeros out symbol table
+    init_compiler();    // Zeros out compiler globals
 
     printf("Starting Determa Test Suite...\n\n");
     
