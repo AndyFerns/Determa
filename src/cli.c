@@ -21,10 +21,7 @@
 #include "vm/compiler.h"
 #include "colours.h"
 
-// Version v0.2 Cedar
-#define VERSION_MAJOR 0
-#define VERSION_MINOR 2
-#define VERSION_NAME  "Cedar"
+#include "version.h"
 
 // --- UX Helpers ---
 
