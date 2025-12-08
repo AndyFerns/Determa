@@ -6,25 +6,35 @@
 #include "typechecker.h"
 #include "ast.h"
 
-// Helper to run snippet and check last stack value (manual inspection)
-// or just rely on "it didn't crash".
-// Since we don't easily capture stdout in tests, we assume if it runs 
-// and doesn't error, logic is generally sound. We can inspect VM stack.
+static void run_snippet(const char* src) {
+    AstNode* ast = parse(src, 0);
+    CHECK(ast != NULL, "Parse succeeded");
 
-static void run_snippet(const char* source) {
-    AstNode* ast = parse(source, 0);
-    if (!ast) { CHECK(0, "Parse failed"); return; }
-    if (!typecheck_ast(ast)) { CHECK(0, "Typecheck failed"); free_ast(ast); return; }
-    
-    Chunk chunk;
-    init_chunk(&chunk);
-    if (compile_ast(ast, &chunk)) {
-        interpret(&chunk);
-    } else {
-        CHECK(0, "Compile failed");
+    if (!typecheck_ast(ast)) {
+        CHECK(0, "Typechecker failed");
+        free_ast(ast);
+        return;
     }
-    free_chunk(&chunk);
+
+    // Initialize VM BEFORE compilation so objects allocated during
+    // compilation (strings, function objects) are tracked by the VM.
+    init_vm();
+
+    ObjFunction* fn = compile_ast(ast);
+
+    if (!fn) { 
+        CHECK(0, "Compile failed"); 
+        free_ast(ast);
+        free_vm();
+        return; 
+    }
+
+    CHECK(fn != NULL, "Compilation succeeded");
+
+    interpret(fn);
+
     free_ast(ast);
+    free_vm();
 }
 
 void test_compiler_locals() {
