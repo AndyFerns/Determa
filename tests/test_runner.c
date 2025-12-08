@@ -15,6 +15,7 @@
 #include "test_vm.h"
 #include "test_compound.h"
 #include "test_locals.h"
+#include "test_functions.h"
 #include "typechecker.h" // For init
 #include "vm/compiler.h" // For init
 
@@ -81,6 +82,11 @@ int main(int argc, char* argv[]) {
     run_test(test_compiler_locals, "Compiler - Local Variables");
     run_test(test_compiler_shadowing, "Compiler - Shadowing");
     run_test(test_compiler_pop_scope, "Compiler - Scope Cleanup");
+
+    // TODO
+    // // Phase 9 — Function Tests
+    // printf("\n");
+    // test_functions_suite();
 
     // --- Add more tests here as we build new modules ---
     // run_test(test_parser_simple, "Parser - Simple Expression");
