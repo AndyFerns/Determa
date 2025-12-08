@@ -1,167 +1,217 @@
-# 🌲 Determa Programming Language
 
-**Version**: v0.2 'Cedar' Dev Build
+# 🌲 **Determa Programming Language**  
 
-**Status**: Active Development (Phase 5 Complete)
+- _A statically-typed language, custom compiler, and virtual machine — written entirely in C_
 
-Determa is a statically-typed, garbage-collected programming language built from scratch in C. It runs on a custom high-performance stack-based Virtual Machine.
+**Version:** `v0.3 “Spruce”`  
+**Status:** Active Development  
 
-Designed as a capstone project for Theoretical Computer Science, Determa bridges the gap between abstract theory (DFAs, CFGs, Type Theory) and practical systems engineering (Bytecode, Virtualization, Memory Management).
+Determa is a **full programming language** built completely from scratch in C — including its own **lexer, parser, type system, bytecode compiler, virtual machine, and garbage collector**.
 
-## Architecture
+Designed as a capstone project for **Theoretical Computer Science**, Determa merges concepts from formal languages (DFA, CFG, Scope Theory) with practical systems implementation (interpreters, memory management, call stacks, symbol tables).
 
-Determa implements a complete compiler pipeline:
+---
 
-1. Lexer: Hand-optimized Deterministic Finite Automata (DFA) for tokenization.
+## 🚀 **Key Features (Current Implementation)**
 
-2. Parser: Recursive Descent Parser (Pushdown Automaton) creating an Abstract Syntax Tree (AST).
+### 🔹 **1. Deterministic Finite Automata (Lexer)**
 
-3. Semantic Analysis: Static Type Checker with persistent Symbol Tables for scope validation.
+- High-performance tokenization  
+- Zero external dependencies  
+- Supports identifiers, keywords, integers, booleans, strings, operators, and punctuation
 
-4. Compiler: Single-pass bytecode generation.
+### 🔹 **2. Recursive Descent Parser (Pushdown Automaton)**
 
-5. Virtual Machine: Stack-based VM with a custom instruction set (ISA).
+- Builds a complete **Abstract Syntax Tree (AST)**  
+- Implements full statement/expression grammar  
+- Supports:
+  - Variable declarations  
+  - Blocks  
+  - If / While  
+  - Function declarations & calls  
+  - Return statements  
+  - Binary and unary operators  
 
-6. Memory Manager: Mark-and-Sweep Garbage Collector for automatic memory management.
+### 🔹 **3. Static Type Checker**
 
-## Quick Start
+- Validates:
+  - Type consistency in expressions  
+  - Variable usage and declarations  
+  - Function signatures & arity  
+- Persistent Symbol Table  
+- Proper lexical scope checking (blocks, functions)
 
-**Prerequisites**
+### 🔹 **4. Bytecode Compiler**
 
-- GCC Compiler (MinGW for Windows, or standard GCC for Linux/Mac).
+- Converts AST → custom bytecode instruction set  
+- Implements:
+  - Global & local variable access  
+  - Arithmetic & logic ops  
+  - Conditional jumps  
+  - Loops  
+  - Function call conventions  
+  - Stack-based execution model  
 
-- A terminal (PowerShell, CMD, or Bash).
+### 🔹 **5. Stack-Based Virtual Machine**
 
-**Building the Project**
+- Registers:
+  - Operand stack  
+  - Call frames  
+  - Instruction pointer  
+- OpCode support:
+  - `OP_ADD`, `OP_SUB`, `OP_MULTIPLY`, `OP_DIVIDE`, `OP_MODULO`
+  - `OP_GET_LOCAL`, `OP_SET_LOCAL`
+  - `OP_GET_GLOBAL`, `OP_SET_GLOBAL`
+  - `OP_CALL`, `OP_RETURN`
+  - `OP_JUMP`, `OP_JUMP_IF_FALSE`, `OP_LOOP`
+  - `OP_PRINT`, `OP_POP`
+- Deterministic function call model  
+- Correct stack unwinding + return value propagation  
 
-The project includes a unified build script.
+### 🔹 **6. Automatic Garbage Collector**
 
-```bash
-# Windows
-.\build.bat
+- Mark-and-Sweep GC  
+- Heaps manages:
+  - Strings  
+  - Functions  
+  - Future object types  
+- Safe during compilation (compiler roots marked)
+
+### 🔹 **7. REPL + Script Execution**
+
+- Interactive shell with persistent variables  
+- Execute `.det` scripts directly  
+- Optional parser-trace debug mode (PDA visualization)
+
+---
+
+## 🧩 **Project Architecture**
+
+```plaintext
+
+Source Code
+   ↓
+Lexer (DFA)
+   ↓
+Parser (Recursive Descent → AST)
+   ↓
+Type Checker (Static Analysis)
+   ↓
+Compiler (Bytecode Generation)
+   ↓
+Virtual Machine (Stack-Based Execution)
+   ↓
+Output
 ```
 
-This generates two executables in the bin/ directory:
+---
 
-- determa.exe: The main compiler and REPL.
+## 📦 **Quick Start**
 
-- determa_test.exe: The internal unit test suite.
+### **Build**
 
-## Usage
+```powershell
+# Windows
+./build.bat
+```
 
-1. **Interactive REPL**
+Outputs:
 
-Launch the executable without arguments to enter the Read-Eval-Print Loop. The REPL supports persistent variables across lines.
+- `bin/determa.exe` → language runner + REPL  
+- `bin/determa_test.exe` → full unit test suite  
 
-```python
-$ .\bin\determa.exe
-Determa v0.2 'Cedar' REPL
-Type 'exit' to quit.
+---
+
+## 💻 **Usage Examples**
+
+### **1. REPL**
+
+```js
+$ .bin\determa.exe
+Determa v0.2 'Cedar'
 > var x = 10;
 > var y = 20;
 > print x + y * 2;
 Out: 50
 ```
 
-2. **File Execution**
+### **2. Script Execution**
 
-Pass a .det file path to compile and run a script.
+Executing **examples/fibonacci.det**
 
-Example Script (examples/hello.det):
+```python
+func fib(n) : int {
+    if n == 0 {
+        return 0;
+    } elif n == 1 {
+        return 1;
+    } else {
+        return fib(n - 1) + fib(n - 2);
+    }
+}
 
-```java
-var greeting = "Hello ";
-var target = "World";
-print greeting + target;
+print "Fibonacci Sequence (just fib(10)):";
+print fib(4);
 ```
 
 Run:
 
 ```pwsh
-$ .\bin\determa.exe examples/hello.det
+$.bin\determa.exe examples/hello.det
 ```
 
-3. **Debug Mode (PDA Trace)**
-
-Use the --pda-debug flag to visualize the Parser's recursive descent logic (Pushdown Automaton stack trace).
+### **3. PDA Debug Mode**
 
 ```bash
-$ .\bin\determa.exe --pda-debug
+$ .bin\determa.exe --pda-debug
 > 1 + 2;
-PUSH: Declaration
-  PUSH: Statement
-    PUSH: Expression
-      ...
+PUSH: Expression
+  PUSH: Term
+    PUSH: Factor
 ```
 
-## Implementation Status
+---
 
-Phase
+## 📋 **Component Status**
 
-Component
+| Phase | Component | Status | Details |
+|------|----------|--------|---------|
+| I | Lexer | ✅ Complete | DFA tokenizer |
+| II | Parser | ✅ Complete | AST construction |
+| III | Type Checker | ✅ Complete | Symbol tables, scopes |
+| IV | Virtual Machine | ✅ Complete | Custom ISA & stack machine |
+| V | Garbage Collector | ✅ Complete | Mark-and-sweep |
+| VI | Control Flow | ✅ Complete | If, while, logical ops |
+| VII | Functions | 🏗️ In Progress | Calls, local vars, returns |
+| VIII | Closures | 🔜 Planned | Lexical captures |
 
-Status
+---
 
-Description
+## 🛠️ **Tech Stack**
 
-I
+- **Language:** C (C99)  
+- **Architecture:** Hand-written compiler + VM  
+- **Dependencies:** None (0 external libraries)  
+- **Memory:** Custom GC  
+- **Design Inspiration:** Wren, Lox, Lua, JVM bytecode  
 
-Lexer
+---
 
-✅ Done
+## 🌿 **Philosophy**
 
-DFA-based tokenization.
+> “Strong like the wood it's named after.”  
 
-II
+Determa emphasizes:
 
-Parser
+- Clarity
+- Predictability  
+- Theory-meets-systems design  
+- Fully self-implemented infrastructure  
 
-✅ Done
+---
 
-AST construction & Grammar definition.
+## 👨‍💻 **Author**
 
-III
+**Andrew Fernandes**  
 
-Type Checker
-
-✅ Done
-
-Type inference & Scope validation.
-
-IV
-
-Virtual Machine
-
-✅ Done
-
-Bytecode execution & Stack manipulation.
-
-V
-
-Garbage Collector
-
-✅ Done
-
-Mark-and-Sweep GC & String support.
-
-VI
-
-Control Flow
-
-### Next
-
-Booleans, if, while, and Logic.
-
-## Tech Stack
-
-- Language: C (C99 Standard)
-
-- Build System: Custom Batch Script
-
-- Dependencies: None (Zero-dependency implementation)
-
-"Strong like the wood it's named after."
-
-## Author
-
-Andrew Fernandes
+Feel free to ⭐ star the repository or reach out on LinkedIn!
