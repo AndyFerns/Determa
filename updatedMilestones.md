@@ -9,43 +9,43 @@ To achieve the "Complete Language" milestone for a v1.0 release, Determa must ev
 
 Currently, all variables are global. This limits recursion and modularity.
 
-- [ ] Compiler Upgrade:
+- [x] Compiler Upgrade:
 
-- [ ] Implement ScopeDepth tracking in the compiler.
+- [x] Implement ScopeDepth tracking in the compiler.
 
-- [ ] Modify variable resolution: Search for locals (stack slots) before globals.
+- [x] Modify variable resolution: Search for locals (stack slots) before globals.
 
-### [ ] VM Upgrade
+### VM Upgrade
 
-- [ ] Implement OP_GET_LOCAL and OP_SET_LOCAL.
+- [x] Implement OP_GET_LOCAL and OP_SET_LOCAL.
 
-- [ ] Unlike globals (lookup by index), locals are accessed by Stack Offset (e.g., "value at slot 3").
+- [x] Unlike globals (lookup by index), locals are accessed by Stack Offset (e.g., "value at slot 3").
 
-- [ ] Implement OP_POP logic to clean up the stack when exiting a { block }.
+- [x] Implement OP_POP logic to clean up the stack when exiting a { block }.
 
 ## Phase 9: First-Class Functions
 
 - The defining feature of modern programming. Allows code reuse and recursion.
 
-- [ ] Function Syntax:
+- [x] Function Syntax:
 
-- [ ] Add fun keyword.
+- [x] Add func keyword.
 
-- [ ] Parser support: fun add(a, b) { return a + b; }.
+- [x] Parser support: fun add(a, b) { return a + b; }.
 
 ## [ ] Function Objects
 
-- [ ] Create ObjFunction struct.
+- [x] Create ObjFunction struct.
 
-- [ ] Functions should be "First Class" (can be stored in variables).
+- [x] Functions should be "First Class" (can be stored in variables).
 
-- [ ] Call Stack:
+- [x] Call Stack:
 
-- [ ] Implement CallFrame struct in the VM.
+- [x] Implement CallFrame struct in the VM.
 
-- [ ] Implement OP_CALL and OP_RETURN.
+- [x] Implement OP_CALL and OP_RETURN.
 
-- [ ] Logic: Save the current instruction pointer (ip), jump to the function, run it, and restore ip on return.
+- [x] Logic: Save the current instruction pointer (ip), jump to the function, run it, and restore ip on return.
 
 ## Phase 10: Native Functions (The Standard Library)
 
