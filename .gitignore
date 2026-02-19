@@ -11,6 +11,9 @@
 *.obj
 *.elf
 
+# Determa specifics
+/bin
+
 # Linker output
 *.ilk
 *.map
