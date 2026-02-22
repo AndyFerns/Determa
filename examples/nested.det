@@ -1,0 +1,10 @@
+func a() {
+    func b() {
+        func c() {
+            return "heheh this is a line";
+        }
+        return c();
+    }
+    return b();
+}
+print a();

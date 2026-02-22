@@ -1,6 +1,6 @@
 /**
  * @file compiler.c
- * @author your name (you@domain.com)
+ * @author Andrew Fernandes
  * @brief A compiler stub used to Walk AST and emit bytecode
  * @version 0.1
  * @date 2025-11-18
@@ -42,7 +42,9 @@ typedef struct {
 } Local;
 
 // State for the compiler
-typedef struct {
+typedef struct Compiler {
+    struct Compiler* enclosing; // keeps track of enclosing block
+
     // Chunk* chunk; // removed as its a part of function now
     ObjFunction* function;
     int hadError;
@@ -80,10 +82,21 @@ static Chunk* current_chunk() {
  */
 void mark_compiler_roots() {
     if (current == NULL) return;
-    
-    Chunk* chunk = current_chunk();
-    for (int i = 0; i < chunk->constants.count; i++) {
-        mark_value(chunk->constants.values[i]);
+
+    Compiler* compiler = current;
+
+    while (compiler != NULL) {
+        // Mark the function object itself
+        mark_object((Obj*)compiler->function);
+
+        // mark all constants inside this function
+        Chunk* chunk = &compiler->function->chunk;
+        for (int i = 0; i < chunk->constants.count; i++) {
+            mark_value(chunk->constants.values[i]);
+        }
+
+        // set current compiler to enclosing compiler
+        compiler = compiler->enclosing;
     }
 }
 
@@ -662,6 +675,7 @@ static void compile_program(Compiler* compiler, AstNode* root) {
         if (compiler->hadError) return;
     }
     // Every chunk must end with a return instruction
+    emit_byte(compiler, OP_NIL, 0); 
     emit_byte(compiler, OP_RETURN, 0); 
 }
 
@@ -671,6 +685,9 @@ static void compile_program(Compiler* compiler, AstNode* root) {
  */
 ObjFunction* compile_ast(struct AstNode* ast) {
     Compiler compiler;
+    // initalize enclosing variable for compiler
+    compiler.enclosing = NULL;
+
     // compiler.chunk = chunk;
     compiler.hadError = 0;
 
@@ -714,6 +731,8 @@ static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
     Compiler sub;
     sub.function = new_function();
 
+    sub.enclosing = current; // sets the current compiler to the parent
+
     // Function arity = number of parameters (only once!!!!!)
     sub.function->arity = fn->param_count;
 
@@ -721,9 +740,9 @@ static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
     sub.function->name = copy_string(fn->name.lexeme, fn->name.length);
 
     sub.scopeDepth = 0;
+
+    // mark number of errors
     sub.hadError = 0;
-    
-    
     
     sub.localCount = 0;
     // ---------------------------------------
@@ -737,7 +756,7 @@ static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
         local->depth = 0;
     }
     
-    Compiler* enclosing = current;
+    // Compiler* enclosing = current; // isolated enclosing to struct-level
     current = &sub;
 
     // Step 3: Begin scope for parameters
@@ -753,7 +772,7 @@ static void compile_function_decl(Compiler* compiler, AstNodeFuncDecl* fn) {
 
     emit_byte(&sub, OP_RETURN, fn->node.line); // Ensure function ends with a return
 
-    current = enclosing; // Restore enclosing compiler
+    current = sub.enclosing; // Restore enclosing compiler
 
     // If we had compile errors inside the function, bail out
     if (sub.hadError) {
