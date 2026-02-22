@@ -2,7 +2,7 @@
  * @file version.h
  * @author Andrew Fernandes
  * @brief Auto-generated version header
- * @generated 2026-02-23 00:07:07
+ * @generated 2026-02-23 00:30:58
  */
 
 #ifndef VERSION_H
@@ -10,10 +10,10 @@
 
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 3
-#define VERSION_PATCH 5
+#define VERSION_PATCH 6
 #define VERSION_NAME  "Spruce"
-#define VERSION_BUILD_TIMESTAMP "2026-02-23 00:07:07"
+#define VERSION_BUILD_TIMESTAMP "2026-02-23 00:30:58"
 
-#define VERSION_FULL "v0.3.5 'Spruce'"
+#define VERSION_FULL "v0.3.6 'Spruce'"
 
 #endif // VERSION_H

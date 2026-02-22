@@ -508,7 +508,7 @@ static AstNode* parse_assignment(Parser* parser) {
         Token op = parser->previous;
         AstNode* value = parse_assignment(parser);
 
-        if (expr->type == NODE_VAR_ACCESS) {
+        if (expr && expr->type == NODE_VAR_ACCESS) { // bugfix:guard against null
             Token name = ((AstNodeVarAccess*)expr)->name;
 
             // Handle Compound Assignment (Desugaring)
@@ -785,9 +785,10 @@ AstNode* parse(const char* source, int pda_debug_mode) {
     pda_debug_indent  = 0;
 
     /* ---- Init Parser State ---- */
-    Parser parser;
-    parser.lexer = init_lexer(source);
-    parser.had_error = 0;
+    Parser parser = {0}; // 0 initialize struct for safety
+    parser.lexer = init_lexer(source); // initialize the lexer 
+    parser.had_error = 0; // tracker for parser error
+    parser.inside_func = 0;  // defaults to outside function declaration
 
     // initialize tokens to safe defaults
     parser.current = (Token){ .type = TOKEN_ERROR, .lexeme = NULL, .length = 0, .line = 0 };
