@@ -438,6 +438,9 @@ static InterpretResult run() {
 
                     // Concatenate the strings
                     ObjString* result = concatenate(a, b);
+
+                    pop(); // b
+                    pop(); // a
                     
                     push(OBJ_VAL(result));
                     break; // important not to fall through to int step afterwards

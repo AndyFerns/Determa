@@ -3,7 +3,10 @@
 #include <string.h>
 #include <time.h>
 
+#ifndef VERSION_FILE
 #define VERSION_FILE "../include/version.h"
+#endif
+
 #define MAX_LINE_LEN 512
 #define MAX_NAME_LEN 128
 
