@@ -384,6 +384,27 @@ static void check_statement(TypeChecker* tc, AstNode* stmt) {
             break;
         }
 
+        // --- return value typechecking logic --- 
+        case NODE_RETURN: {
+            AstNodeReturn* ret = (AstNodeReturn*)stmt;
+            
+            if (ret->value != NULL) {
+                DataType valType = check_expression(tc, ret->value);
+                
+                // check if return type matches function's declared return type
+                if (valType != TYPE_ERROR && tc->currentReturnType != TYPE_VOID 
+                    && valType != tc->currentReturnType) {
+                    error(tc, "Return type does not match function declaration.");
+                }
+            } else {
+                // void return — make sure function expects void
+                if (tc->currentReturnType != TYPE_VOID) {
+                    error(tc, "Non-void function must return a value.");
+                }
+            }
+            break;
+        }
+
         default:
             // Unknown or unsupported statement type
             break;
