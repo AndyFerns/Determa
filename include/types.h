@@ -25,7 +25,8 @@ typedef enum {
     TYPE_INT,       // Integer values
     TYPE_BOOL,      // Boolean falues (TODO)
     TYPE_STRING,    // String (TODO)
-    TYPE_ERROR      // Used when type checking fails
+    TYPE_ERROR,     // Used when type checking fails
+    TYPE_UNKNOWN    // Unknown type handling
 } DataType;
 
 /**
@@ -36,12 +37,13 @@ typedef enum {
  */
 static inline const char* type_to_string(DataType type) {
     switch (type) {
-        case TYPE_VOID:   return "void";
-        case TYPE_INT:    return "int";
-        case TYPE_BOOL:   return "bool";
-        case TYPE_STRING: return "string";
-        case TYPE_ERROR:  return "<type_error>";
-        default:          return "unknown";
+        case TYPE_VOID:     return "void";
+        case TYPE_INT:      return "int";
+        case TYPE_BOOL:     return "bool";
+        case TYPE_STRING:   return "string";
+        case TYPE_ERROR:    return "<type_error>";
+        case TYPE_UNKNOWN:  return "unknown";
+        default:            return "unknown";
     }
 }
 #endif

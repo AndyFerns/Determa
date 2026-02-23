@@ -37,6 +37,7 @@ static int is_initialized = 0;
 typedef struct {
     SymbolTable symbols;
     int had_error;
+    DataType currentReturnType; // check curr ret type with block return type
 } TypeChecker;
 
 
@@ -265,7 +266,6 @@ static void check_statement(TypeChecker* tc, AstNode* stmt) {
                  error(tc, buf);
             }
             break;
-            break;
         }
 
         case NODE_PRINT_STMT: {
@@ -284,6 +284,61 @@ static void check_statement(TypeChecker* tc, AstNode* stmt) {
         case NODE_EXPR_STMT: {
             AstNodeExprStmt* exprStmt = (AstNodeExprStmt*)stmt;
             check_expression(tc, exprStmt->expression);
+            break;
+        }
+
+        case NODE_FUNC_DECL: {
+            AstNodeFuncDecl* fn = (AstNodeFuncDecl*)stmt;
+
+            // register function signature
+            // TODO: add symbol_table_define_function for explicit function typechecking
+            // int defined = symbol_table_define_function(
+            //     &tc->symbols,
+            //     fn->name.lexeme,
+            //     fn->name.length,
+            //     fn->returnType,
+            //     fn->param_count,
+            //     fn->params
+            // );
+
+            // TODO extend the Symbol struct and add symbol_table_define_function() 
+            // to symbol.h/symbol.c
+
+            int defined = symbol_table_define(
+                &tc->symbols, 
+                fn->name.lexeme,
+                fn->name.length, 
+                fn->returnType  // infer void type return temporarily
+            );
+            
+                    
+            if (!defined) {
+                error(tc, "Function already defined in this scope.");
+                return;
+            }
+
+            // enter function scope
+            symbol_table_enter_scope(&tc->symbols);
+
+            // add parameters as variables
+            for (int i = 0; i < fn->param_count; i++) {
+                symbol_table_define(&tc->symbols,
+                    fn->params[i].lexeme,
+                    fn->params[i].length,
+                    TYPE_UNKNOWN /* or declared param type if typed */
+                );
+            }
+
+            // track return type
+            DataType previousReturn = tc->currentReturnType;
+            tc->currentReturnType = fn->returnType;
+
+            // typecheck func body { ... }
+            check_statement(tc, fn->body);
+
+            tc->currentReturnType = previousReturn;
+
+            symbol_table_exit_scope(&tc->symbols);
             break;
         }
 
@@ -350,11 +405,13 @@ int typecheck_ast(AstNode* root) {
     TypeChecker tc;
     tc.had_error = 0;
 
+    tc.currentReturnType = TYPE_VOID;  // Keep default return value void
+
     // Copy global → local
     tc.symbols = globalSymbols;
 
     // Local scope (for this AST run)
-    // symbol_table_enter_scope(&tc.symbols);
+    symbol_table_enter_scope(&tc.symbols);
 
     // symbol_table_init(&globalSymbols);
 
