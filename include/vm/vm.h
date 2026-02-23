@@ -80,4 +80,26 @@ Value peek(int distance); // Look at stack without popping
  */
 InterpretResult interpret(ObjFunction* function); 
 
+/**
+ * @brief Executes a chunk of bytecode. 
+ * 
+ * Call when being used in the REPL mode instead of standard program mode
+ * 
+ * @param function 
+ * @return InterpretResult 
+ */
+InterpretResult interpret_script(ObjFunction* function);
+
+
+/**
+ * @brief Executes a Chunk of bytecode.
+ * 
+ * Call in standard program evaluation mode
+ * 
+ * @param function 
+ * @return InterpretResult 
+ */
+InterpretResult interpret_program(ObjFunction* function);
+
+
 #endif // VM_VM_H

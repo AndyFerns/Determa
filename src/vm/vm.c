@@ -280,7 +280,7 @@ static InterpretResult run() {
 
         #ifdef DEBUG_TRACE_EXECUTION
                 printf("          ");
-                for (Value* slot = vm.stack; slot < stackTop; slot++) {
+                for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
                     printf("[ ");
                     print_value(*slot);
                     printf(" ]");
@@ -289,7 +289,7 @@ static InterpretResult run() {
 
                 printf("IP %04ld: Opcode %d\n", 
                         (long)(FRAME().ip - FRAME().function->chunk.code), 
-                        *FRAME().*ip);
+                        *FRAME().ip);
         #endif
 
         uint8_t instruction = READ_BYTE();
@@ -438,9 +438,6 @@ static InterpretResult run() {
 
                     // Concatenate the strings
                     ObjString* result = concatenate(a, b);
-
-                    pop(); // b
-                    pop(); // a
                     
                     push(OBJ_VAL(result));
                     break; // important not to fall through to int step afterwards
@@ -577,5 +574,66 @@ InterpretResult interpret(ObjFunction* function) {
     frame->ip = function->chunk.code;
     frame->slots = vm.stack;      // slots start at base of stack
 
+    return run();
+}
+
+/**
+ * @brief Executes a chunk of bytecode. 
+ * 
+ * Call when being used in the REPL mode instead of standard program mode
+ * 
+ * @param function 
+ * @return InterpretResult 
+ */
+InterpretResult interpret_script(ObjFunction* function) {
+    reset_stack();
+
+    if (function == NULL) return INTERPRET_COMPILE_ERROR;
+
+    CallFrame* frame = &vm.frames[vm.frameCount++];
+    frame->function = function;
+    frame->ip = function->chunk.code;
+    frame->slots = vm.stack;
+
+    return run();
+}
+
+/**
+ * @brief Executes a Chunk of bytecode.
+ * 
+ * Call in standard program evaluation mode
+ * 
+ * @param function 
+ * @return InterpretResult 
+ */
+InterpretResult interpret_program(ObjFunction* script) {
+    reset_stack();
+
+    if (script == NULL) return INTERPRET_COMPILE_ERROR;
+
+    // Step 1: run script (define globals/functions)
+    CallFrame* frame = &vm.frames[vm.frameCount++];
+    frame->function = script;
+    frame->ip = script->chunk.code;
+    frame->slots = vm.stack;
+
+    InterpretResult result = run();
+    if (result != INTERPRET_OK) return result;
+
+    // lookup main
+    Value mainVal = vm.globals[main_index]; // reference main value
+
+    if (!IS_OBJ(mainVal) || OBJ_TYPE(mainVal) != OBJ_FUNCTION) {
+        runtimeError("No main() defined.");
+        return INTERPRET_RUNTIME_ERROR;
+    }
+
+    // call main
+    push(mainVal);
+    if (!call(AS_FUNCTION(mainVal), 0)) {
+        return INTERPRET_RUNTIME_ERROR;
+    }
+
+    // run again
     return run();
 }

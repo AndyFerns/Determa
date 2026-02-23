@@ -70,7 +70,7 @@ static void test_vm_initialization() {
  * TEST 2: Arithmetic using return-value wrapper
  * ------------------------------------------------------------- */
 static void test_vm_arithmetic() {
-    Value v = run_and_get_return("return 1 + 2;");
+    Value v = run_and_get_return("func main() { return 1 + 2; } main();");
 
     CHECK(IS_INT(v), "Arithmetic result should be integer");
     CHECK(AS_INT(v) == 3, "1 + 2 must equal 3");
@@ -81,7 +81,7 @@ static void test_vm_arithmetic() {
  * TEST 3: Operator precedence using return-value wrapper
  * ------------------------------------------------------------- */
 static void test_vm_precedence_manual() {
-    Value v = run_and_get_return("return -5 + 10;");
+    Value v = run_and_get_return("func main() { return   -5 + 10; } main();");
 
     CHECK(IS_INT(v), "Precedence result should be integer");
     CHECK(AS_INT(v) == 5, "-5 + 10 must equal 5");
