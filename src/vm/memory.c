@@ -281,9 +281,8 @@ void free_object(Obj* object) {
         case OBJ_FUNCTION: {
             ObjFunction* fn = (ObjFunction*)object;
             free_chunk(&fn->chunk);
-            free(fn);
+            reallocate(fn, sizeof(ObjFunction), 0);
             break;
         }
-
     }
 }
