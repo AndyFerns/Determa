@@ -246,7 +246,7 @@ static Token string(Lexer* lexer) {
     }
 
     if (is_at_end(lexer)) {
-        advance(lexer);
+        // advance(lexer); // remove the advance to prevent buffer overflow
         return error_token(lexer, "Unterminated string.");
     }
 
