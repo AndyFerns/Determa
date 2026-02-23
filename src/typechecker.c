@@ -214,6 +214,49 @@ static DataType check_expression(TypeChecker* tc, AstNode* expr) {
             return TYPE_ERROR;
         }
 
+        // --- function call typechecking --- 
+        case NODE_CALL: {
+            // TODO
+            /*
+                Note: This basic version doesn't validate arity 
+                (argument count vs parameter count) 
+                or argument types against parameter types, 
+                because the Symbol struct doesn't store that info yet. 
+                
+                need to extend Symbol with arity and param types for that.
+            */
+            AstNodeCall* call = (AstNodeCall*)expr;
+            
+            // func name lookup
+            DataType fnType = symbol_table_lookup(
+                &tc->symbols, 
+                call->callee.lexeme, 
+                call->callee.length
+            );
+
+            // panic on error
+            if (fnType == TYPE_ERROR) {
+                char buf[256];
+                snprintf(
+                    buf, 
+                    sizeof(buf), 
+                    "Undefined function '%.*s'", 
+                    call->callee.length, 
+                    call->callee.lexeme
+                );
+                error(tc, buf);
+                return TYPE_ERROR;
+            }
+            
+            // typecheck each argument expression
+            for (int i = 0; i < call->arg_count; i++) {
+                check_expression(tc, call->args[i]);
+            }
+            
+            // functions return type
+            return fnType;
+        }
+
         default:
             // Unknown expression node
             return TYPE_ERROR;
