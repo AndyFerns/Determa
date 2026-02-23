@@ -82,11 +82,14 @@ static char* read_file_contents(const char* path) {
 
     char* buffer = (char*)malloc(fileSize + 1);
     if (buffer == NULL) {
+        fclose(file);
         cli_error("Not enough memory to read \"%s\".", path);
     }
 
     size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
     if (bytesRead < fileSize) {
+        free(buffer);
+        fclose(file);
         cli_error("Could not read file \"%s\".", path);
     }
 
